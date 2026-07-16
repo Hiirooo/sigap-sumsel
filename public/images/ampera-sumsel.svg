@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1200" role="img" aria-labelledby="title desc">
+  <title id="title">Ilustrasi Jembatan Ampera dan Sungai Musi</title>
+  <desc id="desc">Ilustrasi geometris landmark Sumatera Selatan dengan pola songket.</desc>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#061a34"/>
+      <stop offset="0.55" stop-color="#0c2d5e"/>
+      <stop offset="1" stop-color="#174d76"/>
+    </linearGradient>
+    <linearGradient id="sun" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f6d77d" stop-opacity=".95"/>
+      <stop offset="1" stop-color="#c9a84c" stop-opacity=".1"/>
+    </linearGradient>
+    <linearGradient id="water" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#143e69"/>
+      <stop offset="1" stop-color="#061426"/>
+    </linearGradient>
+    <pattern id="songket" width="92" height="92" patternUnits="userSpaceOnUse">
+      <path d="M46 4 88 46 46 88 4 46Z" fill="none" stroke="#e8c96d" stroke-width="2" opacity=".18"/>
+      <path d="m46 23 23 23-23 23-23-23Z" fill="#c9a84c" opacity=".08"/>
+      <circle cx="46" cy="46" r="4" fill="#f6d77d" opacity=".28"/>
+    </pattern>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="18"/>
+    </filter>
+  </defs>
+  <rect width="1600" height="1200" fill="url(#sky)"/>
+  <rect width="1600" height="1200" fill="url(#songket)"/>
+  <g fill="#f6d77d">
+    <circle cx="120" cy="148" r="2" opacity=".65"/><circle cx="260" cy="92" r="3" opacity=".45"/>
+    <circle cx="445" cy="182" r="2" opacity=".6"/><circle cx="620" cy="105" r="2" opacity=".4"/>
+    <circle cx="785" cy="215" r="3" opacity=".5"/><circle cx="936" cy="88" r="2" opacity=".7"/>
+    <circle cx="1395" cy="118" r="3" opacity=".55"/><circle cx="1510" cy="268" r="2" opacity=".45"/>
+  </g>
+  <g fill="none" stroke="#a9c8dc" stroke-width="3" opacity=".12">
+    <path d="M112 285c42-34 85-33 129 0 39-24 76-19 109 14H77c9-7 21-12 35-14Z"/>
+    <path d="M680 324c48-39 99-38 151 0 43-27 86-21 126 16H641c11-8 24-14 39-16Z"/>
+  </g>
+  <circle cx="1210" cy="240" r="155" fill="#d9b657" opacity=".12" filter="url(#glow)"/>
+  <circle cx="1210" cy="240" r="92" fill="url(#sun)"/>
+  <path d="M0 575C230 520 375 550 555 525c230-31 365-117 560-95 195 23 320 108 485 63v295H0Z" fill="#0a2344" opacity=".62"/>
+  <g fill="#081b32" opacity=".9">
+    <path d="M0 647h80v-78h52v78h44v-115h67v115h55v-62h43v62h61v141H0Z"/>
+    <path d="M1265 652h44v-98h62v98h43v-147h73v147h113v137h-335Z"/>
+  </g>
+  <g fill="#e8c96d" opacity=".65">
+    <rect x="95" y="604" width="8" height="8"/><rect x="118" y="604" width="8" height="8"/>
+    <rect x="205" y="573" width="9" height="9"/><rect x="230" y="573" width="9" height="9"/>
+    <rect x="1284" y="602" width="8" height="8"/><rect x="1332" y="580" width="9" height="9"/>
+    <rect x="1436" y="552" width="10" height="10"/><rect x="1471" y="552" width="10" height="10"/>
+  </g>
+  <rect y="788" width="1600" height="412" fill="url(#water)"/>
+  <g opacity=".24" fill="none" stroke="#77a8c9" stroke-width="5">
+    <path d="M0 876c190 38 340-42 526-5s341-28 516 1 366-31 558 5"/>
+    <path d="M0 968c160 31 290-34 470-4s343-22 522 4 392-27 608 4"/>
+    <path d="M0 1080c215 30 364-38 570-2s357-24 547 1 318-17 483 6"/>
+  </g>
+  <g id="ampera">
+    <path d="M185 694h1230v46H185Z" fill="#7f111d"/>
+    <path d="M225 681h1150v24H225Z" fill="#d9493f"/>
+    <path d="M242 740h1116v18H242Z" fill="#c9a84c"/>
+    <g fill="#b4252b" stroke="#e46054" stroke-width="8">
+      <path d="M390 690V330h135v360Z"/>
+      <path d="M1075 690V330h135v360Z"/>
+    </g>
+    <g fill="#f0c96b">
+      <path d="M376 330h163l-20-48H396Z"/>
+      <path d="M1061 330h163l-20-48h-123Z"/>
+      <rect x="420" y="374" width="75" height="24" rx="4"/>
+      <rect x="1105" y="374" width="75" height="24" rx="4"/>
+    </g>
+    <g fill="#67111b">
+      <rect x="424" y="416" width="68" height="274"/>
+      <rect x="1109" y="416" width="68" height="274"/>
+    </g>
+    <g fill="none" stroke="#e8c96d" stroke-width="8" opacity=".9">
+      <path d="M458 417C600 520 696 553 800 553s200-33 342-136"/>
+      <path d="M458 451C600 574 696 609 800 609s200-35 342-158"/>
+      <path d="M458 398 260 681M1142 398l198 283"/>
+    </g>
+    <g fill="#d7ac4b">
+      <rect x="432" y="758" width="52" height="150"/>
+      <rect x="1116" y="758" width="52" height="150"/>
+    </g>
+    <g fill="#90202a">
+      <path d="M314 758h55l-20 158h-49Z"/>
+      <path d="M1231 758h55l14 158h-49Z"/>
+    </g>
+  </g>
+  <g opacity=".32" transform="translate(0 1200) scale(1 -0.26)">
+    <use href="#ampera"/>
+  </g>
+  <path d="M113 1078c200-39 341 22 515 1 173-21 293-78 471-53 178 24 298 71 432 42" fill="none" stroke="#c9a84c" stroke-width="3" opacity=".35"/>
+  <g transform="translate(1110 938)">
+    <path d="M0 42h248l-38 45H43Z" fill="#711923"/>
+    <path d="M36 38h177l-20-30H65Z" fill="#d6ad4f"/>
+    <rect x="111" y="-34" width="8" height="74" fill="#e8c96d"/>
+    <path d="m119-30 92 34h-92Z" fill="#f1d47c" opacity=".9"/>
+    <path d="M54 95c54 17 111 17 170 0" fill="none" stroke="#d7b758" stroke-width="4" opacity=".3"/>
+  </g>
+  <g fill="none" stroke="#e8c96d" opacity=".32">
+    <path d="M32 32h230l-30 30H62v170l-30 30Z" stroke-width="5"/>
+    <path d="M1568 32h-230l30 30h170v170l30 30Z" stroke-width="5"/>
+    <path d="m72 72 34 34-34 34-34-34Z" stroke-width="3"/>
+    <path d="m1528 72 34 34-34 34-34-34Z" stroke-width="3"/>
+  </g>
+</svg>
