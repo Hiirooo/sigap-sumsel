@@ -198,7 +198,7 @@ export default function Dashboard({ stats }) {
                         <KpiCard title="Rilis Berita" value={stats?.rilis_berita} subtitle={`${formatNumber(stats?.published_rilis)} sudah terpublikasi`} accent="bg-primary" href={route('rilis-berita.index')} hrefLabel="Kelola rilis" />
                         <KpiCard title="Dokumentasi" value={stats?.dokumentasi} subtitle={`${formatNumber(stats?.verified_docs)} berkas terverifikasi`} accent="bg-blue-600" href={route('dokumentasi.index')} hrefLabel="Buka galeri" />
                         <KpiCard title="Kliping Media" value={stats?.kliping} subtitle="Basis monitoring pemberitaan" accent="bg-gold" href={route('kliping.index')} hrefLabel="Kelola kliping" />
-                        <KpiCard title="Arsip Statis" value={stats?.arsip_statis} subtitle="Dokumen alih media" accent="bg-slate-600" href={route('arsip-statis.index')} hrefLabel="Kelola arsip" />
+                        <KpiCard title="Arsip Kepegawaian" value={stats?.arsip_statis} subtitle="Dokumen kepegawaian" accent="bg-slate-600" href={route('arsip-statis.index')} hrefLabel="Kelola arsip" />
                     </section>
 
                     <section className="grid grid-cols-1 gap-6 xl:grid-cols-[1.55fr_1fr]">

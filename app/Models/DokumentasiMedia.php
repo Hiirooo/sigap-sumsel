@@ -11,7 +11,7 @@ class DokumentasiMedia extends Model
 
     protected $fillable = [
         'dokumentasi_id', 'jenis_media', 'file_path', 'thumbnail_path',
-        'original_name', 'size', 'urutan',
+        'original_name', 'size', 'content_hash', 'urutan',
     ];
 
     protected $casts = [

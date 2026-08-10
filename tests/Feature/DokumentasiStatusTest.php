@@ -11,7 +11,7 @@ class DokumentasiStatusTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_operator_can_toggle_documentation_verification_status(): void
+    public function test_operator_can_toggle_documentation_verification_and_archive_status(): void
     {
         $operator = User::factory()->create(['role' => 'operator']);
         $dokumentasi = Dokumentasi::create([
@@ -30,5 +30,15 @@ class DokumentasiStatusTest extends TestCase
 
             $this->assertSame($expectedStatus, $dokumentasi->refresh()->status_verifikasi);
         }
+
+        $this->actingAs($operator)
+            ->post(route('dokumentasi.toggle-archive', $dokumentasi))
+            ->assertRedirect();
+        $this->assertTrue($dokumentasi->refresh()->is_archived);
+
+        $this->actingAs($operator)
+            ->post(route('dokumentasi.toggle-archive', $dokumentasi))
+            ->assertRedirect();
+        $this->assertFalse($dokumentasi->refresh()->is_archived);
     }
 }

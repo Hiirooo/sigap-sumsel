@@ -39,6 +39,10 @@ return [
     'sumselprov' => [
         'sync_cron' => env('SUMSELPROV_SYNC_CRON', '0 * * * *'),
         'max_pages' => (int) env('SUMSELPROV_SYNC_MAX_PAGES', 5),
+        'api_endpoints' => array_values(array_filter(array_map('trim', explode(',', env(
+            'SUMSELPROV_API_ENDPOINTS',
+            'api_berita_sumsel3,api_berita_all2'
+        ))))),
     ],
 
     'rilis' => [
@@ -46,6 +50,10 @@ return [
         'image_storage_disk' => env('RILIS_IMAGE_STORAGE_DISK', env('FILESYSTEM_DISK', 'local')),
         'image_webp_quality' => (int) env('RILIS_IMAGE_WEBP_QUALITY', 82),
         'image_max_width' => (int) env('RILIS_IMAGE_MAX_WIDTH', 1600),
+    ],
+
+    'kliping' => [
+        'storage_disk' => env('KLIPING_STORAGE_DISK', 'local'),
     ],
 
     'dokumentasi' => [

@@ -4,7 +4,11 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <title inertia>{{ config('app.name', 'Laravel') }}</title>
+        <title inertia>{{ config('app.name', 'SIGAP SUMSEL') }}</title>
+        <meta name="description" content="SIGAP SUMSEL - Sistem informasi terpadu Biro Humas dan Protokol Pemerintah Provinsi Sumatera Selatan.">
+        <meta name="theme-color" content="#06142c">
+        <meta name="application-name" content="SIGAP SUMSEL">
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.googleapis.com">

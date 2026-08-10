@@ -26,7 +26,7 @@ class AppBhpContentApiTest extends TestCase
 
     public function test_release_api_only_returns_published_content(): void
     {
-        RilisBerita::create([
+        $published = RilisBerita::create([
             'judul' => 'Rilis Publik', 'slug' => 'rilis-publik', 'isi' => 'Isi publik',
             'tanggal_rilis' => '2026-07-14', 'penulis' => 'Humas', 'status' => 'terpublikasi',
             'gambar_utama' => 'uploads/rilis/utama.webp',
@@ -36,6 +36,7 @@ class AppBhpContentApiTest extends TestCase
             'judul' => 'Rilis Draft', 'slug' => 'rilis-draft', 'isi' => 'Isi draft',
             'tanggal_rilis' => '2026-07-14', 'penulis' => 'Humas', 'status' => 'draft',
         ]);
+        $this->assertTrue($published->is_archived);
 
         $this->withHeader('X-SIGAP-TOKEN', 'test-token')
             ->getJson('/api/v1/app-bhp/rilis')
@@ -57,8 +58,13 @@ class AppBhpContentApiTest extends TestCase
             'judul' => 'Kliping Draft', 'media' => 'Media Sumsel', 'tanggal' => '2026-07-14',
             'sentimen' => 'netral', 'status' => 'draft',
         ]);
+        Kliping::create([
+            'judul' => 'Kliping Arsip', 'media' => 'Media Sumsel', 'tanggal' => '2026-07-14',
+            'sentimen' => 'netral', 'status' => 'terpublikasi', 'is_archived' => true,
+        ]);
         $dokumentasi = Dokumentasi::create([
             'judul' => 'Dokumentasi Publik', 'tanggal' => '2026-07-14', 'jenis_media' => 'foto',
+            'narasi' => 'Narasi lengkap kegiatan publik.',
             'file_path' => 'uploads/dokumentasi/publik.jpg', 'status_verifikasi' => 'terverifikasi',
             'thumbnail_path' => 'uploads/dokumentasi/thumbnails/publik.webp',
             'status_digitalisasi' => 'sudah_didigitalisasi',
@@ -72,6 +78,11 @@ class AppBhpContentApiTest extends TestCase
             'file_path' => 'uploads/dokumentasi/draft.jpg', 'status_verifikasi' => 'draft',
             'status_digitalisasi' => 'belum_didigitalisasi',
         ]);
+        Dokumentasi::create([
+            'judul' => 'Dokumentasi Arsip', 'tanggal' => '2026-07-14', 'jenis_media' => 'foto',
+            'file_path' => 'uploads/dokumentasi/arsip.jpg', 'status_verifikasi' => 'terverifikasi',
+            'status_digitalisasi' => 'sudah_didigitalisasi', 'is_archived' => true,
+        ]);
 
         $headers = ['X-SIGAP-TOKEN' => 'test-token'];
 
@@ -82,6 +93,7 @@ class AppBhpContentApiTest extends TestCase
         $this->withHeaders($headers)->getJson('/api/v1/app-bhp/dokumentasi')
             ->assertOk()->assertJsonCount(1, 'data')
             ->assertJsonPath('data.0.judul', 'Dokumentasi Publik')
+            ->assertJsonPath('data.0.narasi', 'Narasi lengkap kegiatan publik.')
             ->assertJsonPath('data.0.jenis_media', 'campuran')
             ->assertJsonPath('data.0.media_count', 2)
             ->assertJsonCount(2, 'data.0.media')

@@ -13,19 +13,40 @@ class ArsipStatisController extends Controller
     {
         $filters = $request->only(['search', 'jenis_asli', 'tanggal_mulai', 'tanggal_selesai']);
 
+        $type = $filters['jenis_asli'] ?? null;
+        $search = $filters['search'] ?? null;
+        $from = $filters['tanggal_mulai'] ?? null;
+        $until = $filters['tanggal_selesai'] ?? null;
         $arsip = ArsipStatis::query()
-            ->when($filters['search'] ?? null, function ($query, $search) {
+            ->when($search, function ($query, $search) {
                 $query->where(function ($query) use ($search) {
                     $query->where('judul', 'like', "%{$search}%")
                         ->orWhere('deskripsi', 'like', "%{$search}%")
                         ->orWhere('asal_dokumen', 'like', "%{$search}%");
                 });
             })
-            ->when($filters['jenis_asli'] ?? null, fn ($query, $type) => $query->where('jenis_asli', $type))
-            ->when($filters['tanggal_mulai'] ?? null, fn ($query, $date) => $query->whereDate('tanggal_asli', '>=', $date))
-            ->when($filters['tanggal_selesai'] ?? null, fn ($query, $date) => $query->whereDate('tanggal_asli', '<=', $date))
-            ->latest()
-            ->get();
+            ->when($type, fn ($query, $type) => $query->where('jenis_asli', $type))
+            ->when($from, fn ($query, $date) => $query->whereDate('tanggal_asli', '>=', $date))
+            ->when($until, fn ($query, $date) => $query->whereDate('tanggal_asli', '<=', $date))
+            ->get()
+            ->map(fn (ArsipStatis $item) => [
+                'key' => 'arsip-kepegawaian-'.$item->id,
+                'judul' => $item->judul,
+                'deskripsi' => $item->deskripsi,
+                'tanggal_asli' => $item->tanggal_asli,
+                'asal_dokumen' => $item->asal_dokumen,
+                'jenis_asli' => $item->jenis_asli,
+                'file_url' => $item->file_url,
+                'edit_url' => route('arsip-statis.edit', $item),
+                'delete_url' => route('arsip-statis.destroy', $item),
+                'sort_date' => $item->tanggal_asli ?? $item->created_at?->toDateString(),
+            ])
+            ->sortByDesc('sort_date')
+            ->values()
+            ->map(function (array $item) {
+            unset($item['sort_date']);
+            return $item;
+        });
 
         return Inertia::render('ArsipStatis/Index', [
             'arsip' => $arsip,
@@ -55,7 +76,7 @@ class ArsipStatisController extends Controller
 
         ArsipStatis::create($validated);
 
-        return redirect()->route('arsip-statis.index')->with('message', 'Arsip Statis berhasil ditambahkan.');
+        return redirect()->route('arsip-statis.index')->with('message', 'Arsip Kepegawaian berhasil ditambahkan.');
     }
 
     public function edit($id)
@@ -88,7 +109,7 @@ class ArsipStatisController extends Controller
 
         $arsip->update($validated);
 
-        return redirect()->route('arsip-statis.index')->with('message', 'Arsip Statis berhasil diperbarui.');
+        return redirect()->route('arsip-statis.index')->with('message', 'Arsip Kepegawaian berhasil diperbarui.');
     }
 
     public function destroy($id)
@@ -101,7 +122,7 @@ class ArsipStatisController extends Controller
         
         $arsip->delete();
 
-        return redirect()->route('arsip-statis.index')->with('message', 'Arsip Statis berhasil dihapus.');
+        return redirect()->route('arsip-statis.index')->with('message', 'Arsip Kepegawaian berhasil dihapus.');
     }
 
     private function deleteStoredFile(string $path): void

@@ -17,7 +17,10 @@ class DokumentasiController extends Controller
 {
     public function index(Request $request)
     {
-        $filters = $request->only(['search', 'jenis_media', 'status_verifikasi', 'tanggal_mulai', 'tanggal_selesai']);
+        $filters = $request->only(['search', 'jenis_media', 'status_verifikasi', 'arsip', 'tanggal_mulai', 'tanggal_selesai']);
+        $filters['arsip'] = in_array($filters['arsip'] ?? null, ['belum', 'sudah', 'semua'], true)
+            ? $filters['arsip']
+            : 'belum';
 
         $dokumentasi = Dokumentasi::query()->with('mediaItems')
             ->when($filters['search'] ?? null, function ($query, $search) {
@@ -28,6 +31,7 @@ class DokumentasiController extends Controller
             })
             ->when($filters['jenis_media'] ?? null, fn ($query, $type) => $query->whereHas('mediaItems', fn ($media) => $media->where('jenis_media', $type)))
             ->when($filters['status_verifikasi'] ?? null, fn ($query, $status) => $query->where('status_verifikasi', $status))
+            ->when($filters['arsip'] !== 'semua', fn ($query) => $query->where('is_archived', $filters['arsip'] === 'sudah'))
             ->when($filters['tanggal_mulai'] ?? null, fn ($query, $date) => $query->whereDate('tanggal', '>=', $date))
             ->when($filters['tanggal_selesai'] ?? null, fn ($query, $date) => $query->whereDate('tanggal', '<=', $date))
             ->latest('tanggal')
@@ -52,10 +56,11 @@ class DokumentasiController extends Controller
     {
         $validated = $request->validate([
             'judul' => 'required|string|max:255',
+            'narasi' => 'nullable|string|max:10000',
             'tanggal' => 'required|date',
             'pimpinan_terkait' => 'nullable|string|max:255',
             'status_verifikasi' => 'required|in:draft,terverifikasi',
-            'status_digitalisasi' => 'required|in:belum_didigitalisasi,sudah_didigitalisasi,sudah_diarsipkan',
+            'status_digitalisasi' => 'required|in:belum_didigitalisasi,sudah_didigitalisasi',
             'files' => 'required|array|min:1|max:20',
             'files.*' => 'required|file|mimes:jpeg,png,jpg,webp,mp4,mov|max:51200',
             'thumbnails' => 'nullable|array',
@@ -91,9 +96,13 @@ class DokumentasiController extends Controller
         $validated = $request->validate([
             'username' => 'required|string|max:255',
             'activity_date' => 'required|date_format:Y-m-d',
+            'judul' => 'nullable|string|max:255',
+            'narasi' => 'nullable|string|max:10000',
             'pimpinan_terkait' => 'nullable|string|max:255',
             'metadata_only' => 'sometimes|boolean',
             'photos' => 'nullable|array|min:1|max:20',
+            'media_hashes' => 'nullable|array|max:20',
+            'media_hashes.*' => ['required', 'string', 'size:64', 'regex:/^[a-f0-9]{64}$/'],
             'photos.*' => [
                 'required',
                 'file',
@@ -108,11 +117,20 @@ class DokumentasiController extends Controller
         ]);
 
         $date = Carbon::createFromFormat('Y-m-d', $validated['activity_date']);
-        $title = 'Kumpulan Kegiatan Tanggal '.$date->locale('id')->translatedFormat('d F Y');
+        $title = trim((string) ($validated['judul'] ?? '')) ?: 'Kumpulan Kegiatan Tanggal '.$date->locale('id')->translatedFormat('d F Y');
+        $narasi = trim((string) ($validated['narasi'] ?? '')) ?: null;
         $incomingLeaders = collect(explode(';', $validated['pimpinan_terkait'] ?? ''))
             ->map(fn ($leader) => trim($leader))
             ->filter();
         $metadataOnly = $request->boolean('metadata_only');
+
+        $photos = array_values($request->file('photos', []));
+        $mediaHashes = array_values($validated['media_hashes'] ?? []);
+        if ($mediaHashes && count($photos) !== count($mediaHashes)) {
+            throw ValidationException::withMessages([
+                'media_hashes' => 'Jumlah hash media harus sama dengan jumlah file.',
+            ]);
+        }
 
         if ($metadataOnly) {
             $dokumentasi = Dokumentasi::where('judul', $title)
@@ -132,6 +150,7 @@ class DokumentasiController extends Controller
                     'jenis_media' => 'foto',
                     'file_path' => '',
                     'thumbnail_path' => null,
+                    'narasi' => $narasi,
                     'pimpinan_terkait' => $incomingLeaders->join('; ') ?: null,
                     'status_verifikasi' => $incomingLeaders->isNotEmpty() ? 'terverifikasi' : 'draft',
                     'status_digitalisasi' => 'sudah_didigitalisasi',
@@ -154,6 +173,7 @@ class DokumentasiController extends Controller
             )
             ->values();
         $dokumentasi->update([
+            'narasi' => $narasi ?? $dokumentasi->narasi,
             'pimpinan_terkait' => $leaders->join('; ') ?: null,
             'status_verifikasi' => $leaders->isNotEmpty() ? 'terverifikasi' : 'draft',
         ]);
@@ -167,14 +187,30 @@ class DokumentasiController extends Controller
             ]);
         }
 
+        [$newPhotos, $newHashes, $duplicateCount] = $this->excludeDuplicateMedia(
+            $dokumentasi,
+            $photos,
+            $mediaHashes,
+        );
         $mediaRows = $this->storeMediaUploads(
-            $request->file('photos'),
+            $newPhotos,
             [],
-            ($dokumentasi->mediaItems()->max('urutan') ?? -1) + 1
+            ($dokumentasi->mediaItems()->max('urutan') ?? -1) + 1,
+            $newHashes,
         );
         $storedPaths = collect($mediaRows)->pluck('file_path');
 
         try {
+            if (! $mediaRows) {
+                return response()->json([
+                    'message' => 'Semua media sudah tersedia di SIGAP Sumsel.',
+                    'dokumentasi_id' => $dokumentasi->id,
+                    'judul' => $dokumentasi->judul,
+                    'media_count' => 0,
+                    'duplicate_count' => $duplicateCount,
+                ]);
+            }
+
             DB::transaction(function () use ($dokumentasi, $mediaRows) {
                 $dokumentasi->mediaItems()->createMany($mediaRows);
                 $primary = $dokumentasi->mediaItems()->firstOrFail();
@@ -194,6 +230,7 @@ class DokumentasiController extends Controller
             'dokumentasi_id' => $dokumentasi->id,
             'judul' => $dokumentasi->judul,
             'media_count' => count($mediaRows),
+            'duplicate_count' => $duplicateCount,
         ]);
     }
 
@@ -212,10 +249,11 @@ class DokumentasiController extends Controller
 
         $validated = $request->validate([
             'judul' => 'required|string|max:255',
+            'narasi' => 'nullable|string|max:10000',
             'tanggal' => 'required|date',
             'pimpinan_terkait' => 'nullable|string|max:255',
             'status_verifikasi' => 'required|in:draft,terverifikasi',
-            'status_digitalisasi' => 'required|in:belum_didigitalisasi,sudah_didigitalisasi,sudah_diarsipkan',
+            'status_digitalisasi' => 'required|in:belum_didigitalisasi,sudah_didigitalisasi',
             'files' => 'nullable|array|max:20',
             'files.*' => 'required|file|mimes:jpeg,png,jpg,webp,mp4,mov|max:51200',
             'thumbnails' => 'nullable|array',
@@ -270,6 +308,56 @@ class DokumentasiController extends Controller
         return redirect()->route('dokumentasi.index')->with('message', 'Dokumentasi berhasil dihapus.');
     }
 
+    public function destroyAll()
+    {
+        $documentCount = Dokumentasi::count();
+        $paths = DokumentasiMedia::query()
+            ->get(['file_path', 'thumbnail_path'])
+            ->flatMap(fn (DokumentasiMedia $media) => [$media->file_path, $media->thumbnail_path])
+            ->merge(
+                Dokumentasi::query()
+                    ->get(['file_path', 'thumbnail_path'])
+                    ->flatMap(fn (Dokumentasi $item) => [$item->file_path, $item->thumbnail_path])
+            )
+            ->filter()
+            ->unique();
+
+        DB::transaction(function () {
+            DokumentasiMedia::query()->delete();
+            Dokumentasi::query()->delete();
+        });
+
+        $paths->each(fn ($path) => $this->deleteStoredFile($path));
+
+        return redirect()->route('dokumentasi.index')
+            ->with('success', "{$documentCount} dokumentasi beserta seluruh media berhasil dihapus.");
+    }
+
+    public function destroySelected(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['required', 'integer', 'distinct', 'exists:dokumentasis,id'],
+        ]);
+        $dokumentasi = Dokumentasi::with('mediaItems')->whereKey($validated['ids'])->get();
+        $paths = $dokumentasi->flatMap(function (Dokumentasi $item) {
+            return $item->mediaItems
+                ->flatMap(fn (DokumentasiMedia $media) => [$media->file_path, $media->thumbnail_path])
+                ->merge([$item->file_path, $item->thumbnail_path]);
+        })->filter()->unique();
+        $ids = $dokumentasi->modelKeys();
+
+        DB::transaction(function () use ($ids) {
+            DokumentasiMedia::query()->whereIn('dokumentasi_id', $ids)->delete();
+            Dokumentasi::query()->whereKey($ids)->delete();
+        });
+
+        $paths->each(fn ($path) => $this->deleteStoredFile($path));
+
+        return redirect()->route('dokumentasi.index')
+            ->with('success', count($ids).' dokumentasi yang ditandai beserta seluruh medianya berhasil dihapus.');
+    }
+
     public function toggleStatus(Dokumentasi $dokumentasi)
     {
         $nextStatus = $dokumentasi->status_verifikasi === 'draft' ? 'terverifikasi' : 'draft';
@@ -277,6 +365,15 @@ class DokumentasiController extends Controller
         $dokumentasi->update(['status_verifikasi' => $nextStatus]);
 
         return back()->with('message', "Status dokumentasi diubah menjadi {$nextStatus}.");
+    }
+
+    public function toggleArchive(Dokumentasi $dokumentasi)
+    {
+        $dokumentasi->update(['is_archived' => ! $dokumentasi->is_archived]);
+
+        return back()->with('message', $dokumentasi->is_archived
+            ? 'Dokumentasi berhasil diarsipkan.'
+            : 'Dokumentasi dikeluarkan dari arsip.');
     }
 
     private function prepareForManagement(Dokumentasi $dokumentasi): void
@@ -303,7 +400,7 @@ class DokumentasiController extends Controller
         }
     }
 
-    private function storeMediaUploads(array $files, array $thumbnails, int $startOrder = 0): array
+    private function storeMediaUploads(array $files, array $thumbnails, int $startOrder = 0, array $contentHashes = []): array
     {
         $rows = [];
         $storedPaths = [];
@@ -322,6 +419,7 @@ class DokumentasiController extends Controller
                     'thumbnail_path' => $thumbnailPath,
                     'original_name' => $file->getClientOriginalName(),
                     'size' => $file->getSize(),
+                    'content_hash' => $contentHashes[$index] ?? null,
                     'urutan' => $startOrder + $index,
                 ];
             }
@@ -331,6 +429,75 @@ class DokumentasiController extends Controller
         }
 
         return $rows;
+    }
+
+    private function excludeDuplicateMedia(Dokumentasi $dokumentasi, array $files, array $hashes): array
+    {
+        if (! $hashes) {
+            return [$files, [], 0];
+        }
+
+        $existingMedia = $dokumentasi->mediaItems()->get();
+        $seenHashes = $existingMedia->pluck('content_hash')->filter()->all();
+        $newFiles = [];
+        $newHashes = [];
+        $duplicateCount = 0;
+
+        foreach ($files as $index => $file) {
+            $hash = $hashes[$index];
+            if (in_array($hash, $seenHashes, true)) {
+                $duplicateCount++;
+                continue;
+            }
+
+            $legacyCandidates = $existingMedia
+                ->whereNull('content_hash')
+                ->where('original_name', $file->getClientOriginalName())
+                ->where('size', $file->getSize());
+            $legacyMatch = $legacyCandidates->first(
+                fn (DokumentasiMedia $media) => hash_equals($hash, $this->storedFileHash($media->file_path) ?? '')
+            );
+            if ($legacyMatch) {
+                $legacyMatch->update(['content_hash' => $hash]);
+                $seenHashes[] = $hash;
+                $duplicateCount++;
+                continue;
+            }
+
+            $newFiles[] = $file;
+            $newHashes[] = $hash;
+            $seenHashes[] = $hash;
+        }
+
+        return [$newFiles, $newHashes, $duplicateCount];
+    }
+
+    private function storedFileHash(string $path): ?string
+    {
+        $path = str_starts_with($path, '/storage/')
+            ? ltrim(str_replace('/storage/', '', $path), '/')
+            : (str_starts_with($path, 'public/') ? substr($path, 7) : $path);
+
+        foreach ($this->storageDisks() as $disk) {
+            if (! Storage::disk($disk)->exists($path)) {
+                continue;
+            }
+
+            $stream = Storage::disk($disk)->readStream($path);
+            if ($stream === false) {
+                return null;
+            }
+
+            try {
+                $context = hash_init('sha256');
+                hash_update_stream($context, $stream);
+                return hash_final($context);
+            } finally {
+                fclose($stream);
+            }
+        }
+
+        return null;
     }
 
     private function deleteStoredFile(string $path): void

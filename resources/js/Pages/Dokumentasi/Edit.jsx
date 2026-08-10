@@ -10,6 +10,7 @@ export default function Edit({ dokumentasi }) {
     const { data, setData, post, processing, errors } = useForm({
         _method: 'put',
         judul: dokumentasi.judul || '',
+        narasi: dokumentasi.narasi || '',
         tanggal: dokumentasi.tanggal || '',
         pimpinan_terkait: dokumentasi.pimpinan_terkait || '',
         status_verifikasi: dokumentasi.status_verifikasi || 'draft',
@@ -75,6 +76,12 @@ export default function Edit({ dokumentasi }) {
                                 <input type="text" value={data.judul} onChange={(e) => setData('judul', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary" />
                                 {errors.judul && <p className="mt-1 text-sm text-red-600">{errors.judul}</p>}
                             </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Narasi Kegiatan</label>
+                                <textarea rows="6" value={data.narasi} onChange={(e) => setData('narasi', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary" placeholder="Tuliskan rangkaian, tujuan, dan hasil kegiatan..." />
+                                <div className="mt-1 flex justify-between gap-3 text-xs text-gray-500"><span>Narasi ini ditampilkan pada galeri publik.</span><span>{data.narasi.length}/10000</span></div>
+                                {errors.narasi && <p className="mt-1 text-sm text-red-600">{errors.narasi}</p>}
+                            </div>
                             <div className="grid gap-6 md:grid-cols-2">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700">Tanggal Kegiatan</label>
@@ -127,7 +134,7 @@ export default function Edit({ dokumentasi }) {
 
                             <div className="grid gap-6 md:grid-cols-2">
                                 <div><label className="block text-sm font-medium text-gray-700">Status Verifikasi</label><select value={data.status_verifikasi} onChange={(e) => setData('status_verifikasi', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300"><option value="draft">Draft</option><option value="terverifikasi">Terverifikasi</option></select></div>
-                                <div><label className="block text-sm font-medium text-gray-700">Status Digitalisasi</label><select value={data.status_digitalisasi} onChange={(e) => setData('status_digitalisasi', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300"><option value="belum_didigitalisasi">Belum Didigitalisasi</option><option value="sudah_didigitalisasi">Sudah Didigitalisasi</option><option value="sudah_diarsipkan">Sudah Diarsipkan</option></select></div>
+                                <div><label className="block text-sm font-medium text-gray-700">Status Digitalisasi</label><select value={data.status_digitalisasi} onChange={(e) => setData('status_digitalisasi', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300"><option value="belum_didigitalisasi">Belum Didigitalisasi</option><option value="sudah_didigitalisasi">Sudah Didigitalisasi</option></select></div>
                             </div>
                             <div className="flex justify-end gap-4"><Link href={route('dokumentasi.index')} className="px-4 py-2 font-semibold text-gray-600">Batal</Link><button disabled={processing || generatingThumbnails} className="rounded-lg bg-primary px-5 py-2 font-bold text-white shadow-md hover:bg-primary-dark disabled:opacity-60">Simpan Perubahan</button></div>
                         </form>

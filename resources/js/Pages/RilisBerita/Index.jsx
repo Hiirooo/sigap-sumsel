@@ -48,7 +48,6 @@ export default function Index({ rilisBerita, filters = {} }) {
     const statusClass = {
         draft: 'border-amber-200 bg-amber-50 text-amber-700 hover:border-amber-300 hover:bg-amber-100',
         terpublikasi: 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-300 hover:bg-emerald-100',
-        diarsipkan: 'border-slate-200 bg-slate-100 text-slate-600 hover:border-slate-300 hover:bg-slate-200',
     };
 
     const toggleStatus = (item) => {
@@ -227,7 +226,6 @@ export default function Index({ rilisBerita, filters = {} }) {
                                     <option value="">Semua Status</option>
                                     <option value="draft">Draft</option>
                                     <option value="terpublikasi">Terpublikasi</option>
-                                    <option value="diarsipkan">Diarsipkan</option>
                                 </select>
                                 <input
                                     type="date"
@@ -272,7 +270,7 @@ export default function Index({ rilisBerita, filters = {} }) {
                                     <tbody className="divide-y divide-gray-100 bg-white">
                                         {releases.length === 0 ? (
                                             <tr>
-                                                <td colSpan="4" className="px-6 py-16 text-center">
+                                                    <td colSpan="4" className="px-6 py-16 text-center">
                                                     <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-xl text-slate-400">-</div>
                                                     <p className="font-semibold text-gray-700">Belum ada rilis berita</p>
                                                     <p className="mt-1 text-sm text-gray-400">Tambahkan berita baru, sinkronkan Sumselprov, atau sesuaikan filter.</p>

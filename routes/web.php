@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PublicContentController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -12,6 +13,15 @@ Route::get('/', function () {
         'laravelVersion' => Application::VERSION,
         'phpVersion' => PHP_VERSION,
     ]);
+});
+
+Route::prefix('publik')->name('public.')->group(function () {
+    Route::get('rilis', [PublicContentController::class, 'rilisIndex'])->name('rilis.index');
+    Route::get('rilis/{slug}', [PublicContentController::class, 'rilisShow'])->name('rilis.show');
+    Route::get('galeri', [PublicContentController::class, 'galeriIndex'])->name('galeri.index');
+    Route::get('galeri/{dokumentasi}', [PublicContentController::class, 'galeriShow'])->name('galeri.show');
+    Route::get('kliping', [PublicContentController::class, 'klipingIndex'])->name('kliping.index');
+    Route::get('kliping/{kliping}', [PublicContentController::class, 'klipingShow'])->name('kliping.show');
 });
 
 Route::get('secure-files/dokumentasi/{dokumentasi}/signed', [\App\Http\Controllers\SecureFileController::class, 'dokumentasi'])
@@ -104,7 +114,7 @@ Route::get('/dashboard', function () {
                 ['label' => 'Rilis Berita', 'value' => $rilisCount, 'color' => '#0c2d5e'],
                 ['label' => 'Dokumentasi', 'value' => $dokumentasiCount, 'color' => '#1d4ed8'],
                 ['label' => 'Kliping', 'value' => $klipingCount, 'color' => '#d4af37'],
-                ['label' => 'Arsip Statis', 'value' => $arsipCount, 'color' => '#64748b'],
+                ['label' => 'Arsip Kepegawaian', 'value' => $arsipCount, 'color' => '#64748b'],
             ],
             'sentiment' => [
                 ['label' => 'Positif', 'value' => \App\Models\Kliping::where('sentimen', 'positif')->count(), 'color' => '#16a34a'],
@@ -147,12 +157,23 @@ Route::middleware('auth')->group(function () {
         Route::post('rilis-berita/sync-sumselprov', [\App\Http\Controllers\RilisBeritaController::class, 'syncSumselprov'])
             ->middleware('throttle:120,1')
             ->name('rilis-berita.sync-sumselprov');
+        Route::post('rilis-berita/preview-url', [\App\Http\Controllers\RilisBeritaController::class, 'previewUrl'])
+            ->middleware('throttle:30,1')
+            ->name('rilis-berita.preview-url');
         Route::post('rilis-berita/{rilisBerita}/toggle-status', [\App\Http\Controllers\RilisBeritaController::class, 'toggleStatus'])->name('rilis-berita.toggle-status');
         Route::resource('rilis-berita', \App\Http\Controllers\RilisBeritaController::class);
         Route::post('dokumentasi/{dokumentasi}/toggle-status', [\App\Http\Controllers\DokumentasiController::class, 'toggleStatus'])->name('dokumentasi.toggle-status');
+        Route::post('dokumentasi/{dokumentasi}/toggle-archive', [\App\Http\Controllers\DokumentasiController::class, 'toggleArchive'])->name('dokumentasi.toggle-archive');
+        Route::delete('dokumentasi/delete-selected', [\App\Http\Controllers\DokumentasiController::class, 'destroySelected'])
+            ->name('dokumentasi.destroy-selected');
+        Route::delete('dokumentasi/delete-all', [\App\Http\Controllers\DokumentasiController::class, 'destroyAll'])
+            ->middleware('role:admin')
+            ->name('dokumentasi.destroy-all');
         Route::resource('dokumentasi', \App\Http\Controllers\DokumentasiController::class);
         Route::post('kliping/detect-url', [\App\Http\Controllers\KlipingController::class, 'detectUrl'])->name('kliping.detect-url');
+        Route::post('kliping/import-url', [\App\Http\Controllers\KlipingController::class, 'importUrl'])->name('kliping.import-url');
         Route::patch('kliping/{kliping}/toggle-status', [\App\Http\Controllers\KlipingController::class, 'toggleStatus'])->name('kliping.toggle-status');
+        Route::post('kliping/{kliping}/toggle-archive', [\App\Http\Controllers\KlipingController::class, 'toggleArchive'])->name('kliping.toggle-archive');
         Route::resource('kliping', \App\Http\Controllers\KlipingController::class);
         Route::resource('arsip-statis', \App\Http\Controllers\ArsipStatisController::class);
         Route::get('monev/create', [\App\Http\Controllers\MonevChecklistController::class, 'create'])->name('monev.create');

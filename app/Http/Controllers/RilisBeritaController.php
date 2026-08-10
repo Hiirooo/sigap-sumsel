@@ -43,13 +43,34 @@ class RilisBeritaController extends Controller
         return Inertia::render('RilisBerita/Create');
     }
 
+    public function previewUrl(Request $request, SumselprovNewsImporter $importer)
+    {
+        $validated = $request->validate([
+            'url' => 'required|url:https|max:2048',
+        ]);
+
+        try {
+            return response()->json($importer->previewUrl($validated['url']));
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            return response()->json([
+                'message' => $exception instanceof \InvalidArgumentException
+                    ? $exception->getMessage()
+                    : 'Data berita dari tautan tersebut tidak dapat diambil.',
+            ], 422);
+        }
+    }
+
     public function syncSumselprov(Request $request, SumselprovNewsImporter $importer)
     {
+        $endpoint = $request->input('endpoint');
+
         if ($request->input('mode') === 'preview') {
             $validated = $request->validate(['page' => 'required|integer|min:1|max:33']);
 
             try {
-                $result = $importer->previewPage((int) $validated['page']);
+                $result = $importer->previewPage((int) $validated['page'], $endpoint);
             } catch (\Throwable $exception) {
                 report($exception);
 
@@ -89,7 +110,7 @@ class RilisBeritaController extends Controller
             $validated = $request->validate(['page' => 'required|integer|min:1|max:33']);
 
             try {
-                $result = $importer->importPage((int) $validated['page']);
+                $result = $importer->importPage((int) $validated['page'], $endpoint);
             } catch (\Throwable $exception) {
                 report($exception);
 
@@ -107,7 +128,7 @@ class RilisBeritaController extends Controller
         }
 
         try {
-            $result = $importer->import();
+            $result = $importer->import(endpoint: $endpoint);
         } catch (\Throwable $exception) {
             report($exception);
 
@@ -131,20 +152,36 @@ class RilisBeritaController extends Controller
             'tanggal_rilis' => 'required|date',
             'penulis' => 'required|string|max:255',
             'media_publikasi' => 'nullable|string|max:255',
-            'status' => 'required|in:draft,terpublikasi,diarsipkan',
-            'gambar_utama' => 'required|image|mimes:jpeg,jpg,png,gif,webp|max:20480',
+            'status' => 'required|in:draft,terpublikasi',
+            'gambar_utama' => 'nullable|image|mimes:jpeg,jpg,png,gif,webp|max:20480',
             'gambar_pendukung' => 'nullable|array|max:10',
             'gambar_pendukung.*' => 'image|mimes:jpeg,jpg,png,gif,webp|max:20480',
+            'sumber_url' => 'nullable|url:https|max:2048',
+            'imported_image_urls' => 'nullable|array|max:11',
+            'imported_image_urls.*' => 'url:https|max:2048',
         ]);
 
+        if (! $request->hasFile('gambar_utama') && empty($validated['imported_image_urls'])) {
+            throw ValidationException::withMessages([
+                'gambar_utama' => 'Gambar utama wajib diunggah atau diambil dari tautan berita.',
+            ]);
+        }
+
         $validated['slug'] = Str::slug($validated['judul']);
-        unset($validated['gambar_utama'], $validated['gambar_pendukung']);
+        $remoteImages = $validated['imported_image_urls'] ?? [];
+        unset($validated['gambar_utama'], $validated['gambar_pendukung'], $validated['imported_image_urls']);
         $storedImages = [];
 
         try {
             if ($request->hasFile('gambar_utama')) {
                 $validated['gambar_utama'] = $imageService->storeUploadedImage(
                     $request->file('gambar_utama'),
+                    $validated['slug'].'-utama-'.Str::uuid(),
+                );
+                $storedImages[] = $validated['gambar_utama'];
+            } else {
+                $validated['gambar_utama'] = $imageService->storeRemoteImage(
+                    array_shift($remoteImages),
                     $validated['slug'].'-utama-'.Str::uuid(),
                 );
                 $storedImages[] = $validated['gambar_utama'];
@@ -158,6 +195,15 @@ class RilisBeritaController extends Controller
                 })
                 ->values()
                 ->all();
+
+            foreach (array_slice($remoteImages, 0, 10 - count($validated['gambar_pendukung'])) as $index => $url) {
+                $path = $imageService->storeRemoteImage(
+                    $url,
+                    $validated['slug'].'-pendukung-'.$index.'-'.Str::uuid(),
+                );
+                $validated['gambar_pendukung'][] = $path;
+                $storedImages[] = $path;
+            }
 
             RilisBerita::create($validated);
         } catch (\Throwable $exception) {
@@ -200,7 +246,7 @@ class RilisBeritaController extends Controller
             'tanggal_rilis' => 'required|date',
             'penulis' => 'required|string|max:255',
             'media_publikasi' => 'nullable|string|max:255',
-            'status' => 'required|in:draft,terpublikasi,diarsipkan',
+            'status' => 'required|in:draft,terpublikasi',
             'gambar_utama' => 'nullable|image|mimes:jpeg,jpg,png,gif,webp|max:20480',
             'gambar_pendukung' => 'nullable|array|max:10',
             'gambar_pendukung.*' => 'image|mimes:jpeg,jpg,png,gif,webp|max:20480',
@@ -284,7 +330,6 @@ class RilisBeritaController extends Controller
     {
         $nextStatus = match ($rilisBerita->status) {
             'draft' => 'terpublikasi',
-            'terpublikasi' => 'diarsipkan',
             default => 'draft',
         };
 
@@ -292,4 +337,5 @@ class RilisBeritaController extends Controller
 
         return back()->with('message', "Status rilis diubah menjadi {$nextStatus}.");
     }
+
 }

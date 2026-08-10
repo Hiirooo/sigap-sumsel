@@ -11,7 +11,7 @@ class RilisBeritaStatusTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_operator_can_cycle_release_publication_status(): void
+    public function test_release_is_automatically_archived_based_on_publication_status(): void
     {
         $operator = User::factory()->create(['role' => 'operator']);
         $rilis = RilisBerita::create([
@@ -22,12 +22,13 @@ class RilisBeritaStatusTest extends TestCase
             'status' => 'draft',
         ]);
 
-        foreach (['terpublikasi', 'diarsipkan', 'draft'] as $expectedStatus) {
+        foreach ([['terpublikasi', true], ['draft', false]] as [$expectedStatus, $expectedArchive]) {
             $this->actingAs($operator)
                 ->post(route('rilis-berita.toggle-status', $rilis))
                 ->assertRedirect();
 
             $this->assertSame($expectedStatus, $rilis->refresh()->status);
+            $this->assertSame($expectedArchive, $rilis->is_archived);
         }
     }
 }

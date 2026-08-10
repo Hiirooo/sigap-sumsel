@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Services;
+use App\Models\Kliping;
 
 use DOMDocument;
 use DOMElement;
@@ -458,10 +459,52 @@ class ArticleSentimentService
             return null;
         }
 
+        $contents = $response->body();
+
+        if ($contents === '' || strlen($contents) > 20 * 1024 * 1024) {
+            return null;
+        }
+
         $path = 'uploads/kliping/'.Str::uuid().'.'.$extension;
-        Storage::put($path, $response->body());
+
+        if (! Storage::disk($this->storageDisk())->put($path, $contents)) {
+            return null;
+        }
 
         return $path;
+    }
+
+    public function recoverKlipingImage(Kliping $kliping): ?string
+    {
+        if (! $kliping->url) {
+            return null;
+        }
+
+        try {
+            $response = $this->fetchUrl($kliping->url);
+
+            if (! $response->successful()) {
+                return null;
+            }
+
+            $article = $this->extractArticle($response->body(), $kliping->url);
+            $path = ! empty($article['image_url']) ? $this->downloadImage($article['image_url']) : null;
+
+            if ($path) {
+                $kliping->update(['file_path' => $path]);
+            }
+
+            return $path;
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    private function storageDisk(): string
+    {
+        $disk = (string) config('services.kliping.storage_disk', 'local');
+
+        return in_array($disk, ['local', 'google-drive'], true) ? $disk : 'local';
     }
 
     private function resolveUrl(string $url, string $baseUrl): string

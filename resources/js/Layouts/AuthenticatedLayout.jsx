@@ -16,26 +16,26 @@ export default function AuthenticatedLayout({ header, children }) {
     return (
         <div className="min-h-screen bg-gray-50">
             <nav className="border-b border-emerald-950/30 bg-gradient-to-r from-primary via-emerald-800 to-primary-dark text-white shadow-lg shadow-emerald-950/10">
-                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <div className="flex h-20 justify-between">
-                        <div className="flex">
+                <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-8">
+                    <div className="flex h-20 items-center justify-between gap-4">
+                        <div className="flex min-w-0 flex-1 items-center">
                             <div className="flex shrink-0 items-center">
-                                <Link href="/" className="flex items-center gap-3 rounded-2xl px-1 py-2 transition hover:bg-white/10">
-                                    <span className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl border border-white/30 bg-white p-1.5 shadow-sm">
+                                <Link href="/" className="flex items-center gap-3 rounded-2xl px-1 py-2 transition hover:bg-white/10 xl:gap-3.5">
+                                    <span className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-xl border border-white/30 bg-white p-1.5 shadow-sm xl:h-12 xl:w-12">
                                         <ApplicationLogo className="h-full w-full object-contain" />
                                     </span>
-                                    <span className="hidden leading-tight lg:block">
-                                        <span className="block text-sm font-black uppercase tracking-[0.22em] text-gold">SIGAP Sumsel</span>
-                                        <span className="block text-xs font-semibold text-white/80">Biro Humas dan Protokol</span>
+                                    <span className="hidden min-w-0 leading-tight lg:block">
+                                        <span className="block whitespace-nowrap text-xs font-black uppercase tracking-[0.2em] text-gold xl:text-sm xl:tracking-[0.22em]">SIGAP Sumsel</span>
+                                        <span className="block whitespace-nowrap text-[11px] font-semibold text-white/80 xl:text-xs">Biro Humas dan Protokol</span>
                                     </span>
                                 </Link>
                             </div>
 
-                            <div className="hidden space-x-6 sm:-my-px sm:ms-8 sm:flex">
+                            <div className="hidden min-w-0 flex-1 items-center justify-center gap-1 sm:-my-px sm:ms-4 sm:flex lg:ms-6 xl:gap-2">
                                 <NavLink
                                     href={route('dashboard')}
                                     active={route().current('dashboard')}
-                                    className="text-white hover:text-gold focus:text-gold"
+                                    className="whitespace-nowrap px-2 text-sm text-white hover:text-gold focus:text-gold xl:px-3"
                                 >
                                     Dashboard
                                 </NavLink>
@@ -44,60 +44,60 @@ export default function AuthenticatedLayout({ header, children }) {
                                         <NavLink
                                             href={route('rilis-berita.index')}
                                             active={route().current('rilis-berita.*')}
-                                            className="text-white hover:text-gold focus:text-gold"
+                                            className="whitespace-nowrap px-2 text-sm text-white hover:text-gold focus:text-gold xl:px-3"
                                         >
-                                            Rilis Berita
+                                            Rilis
                                         </NavLink>
                                         <NavLink
                                             href={route('dokumentasi.index')}
                                             active={route().current('dokumentasi.*')}
-                                            className="text-white hover:text-gold focus:text-gold"
+                                            className="whitespace-nowrap px-2 text-sm text-white hover:text-gold focus:text-gold xl:px-3"
                                         >
-                                            Galeri Dokumentasi
+                                            Galeri
                                         </NavLink>
                                         <NavLink
                                             href={route('kliping.index')}
                                             active={route().current('kliping.*')}
-                                            className="text-white hover:text-gold focus:text-gold"
+                                            className="whitespace-nowrap px-2 text-sm text-white hover:text-gold focus:text-gold xl:px-3"
                                         >
                                             Kliping
                                         </NavLink>
                                         <NavLink
                                             href={route('arsip-statis.index')}
                                             active={route().current('arsip-statis.*')}
-                                            className="text-white hover:text-gold focus:text-gold"
+                                            className="whitespace-nowrap px-2 text-sm text-white hover:text-gold focus:text-gold xl:px-3"
                                         >
-                                            Arsip Statis
+                                            Arsip Pegawai
                                         </NavLink>
                                     </>
                                 )}
                                 <NavLink
                                     href={route('inventaris.index')}
                                     active={route().current('inventaris.*')}
-                                    className="text-white hover:text-gold focus:text-gold"
+                                    className="whitespace-nowrap px-2 text-sm text-white hover:text-gold focus:text-gold xl:px-3"
                                 >
-                                    Inventaris & Laporan
+                                    Inventaris
                                 </NavLink>
                                 <NavLink
                                     href={route('monev.index')}
                                     active={route().current('monev.*')}
-                                    className="text-white hover:text-gold focus:text-gold"
+                                    className="whitespace-nowrap px-2 text-sm text-white hover:text-gold focus:text-gold xl:px-3"
                                 >
                                     Monev
                                 </NavLink>
                             </div>
                         </div>
 
-                        <div className="hidden sm:ms-6 sm:flex sm:items-center">
-                            <div className="relative ms-3">
+                        <div className="hidden shrink-0 sm:flex sm:items-center">
+                            <div className="relative">
                                 <Dropdown>
                                     <Dropdown.Trigger>
                                         <span className="inline-flex rounded-md">
                                             <button
                                                 type="button"
-                                                className="inline-flex items-center rounded-xl border border-white/20 bg-white/95 px-4 py-2 text-sm font-bold leading-4 text-emerald-950 shadow-sm transition duration-150 ease-in-out hover:bg-white focus:outline-none focus:ring-2 focus:ring-gold/70"
+                                                className="inline-flex max-w-[150px] items-center rounded-xl border border-white/20 bg-white/95 px-3 py-2 text-sm font-bold leading-4 text-emerald-950 shadow-sm transition duration-150 ease-in-out hover:bg-white focus:outline-none focus:ring-2 focus:ring-gold/70 xl:max-w-[180px] xl:px-4"
                                             >
-                                                {user.name}
+                                                <span className="truncate">{user.name}</span>
 
                                                 <svg
                                                     className="-me-0.5 ms-2 h-4 w-4"
@@ -220,7 +220,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                     href={route('arsip-statis.index')}
                                     active={route().current('arsip-statis.*')}
                                 >
-                                    Arsip Statis
+                                    Arsip Kepegawaian
                                 </ResponsiveNavLink>
                             </>
                         )}

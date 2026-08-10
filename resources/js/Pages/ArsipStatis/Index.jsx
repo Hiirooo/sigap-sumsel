@@ -27,18 +27,18 @@ export default function Index({ arsip, filters = {} }) {
         <AuthenticatedLayout
             header={
                 <h2 className="text-xl font-semibold leading-tight text-white">
-                    Modul Arsip Statis & Alih Media
+                    Modul Arsip Kepegawaian
                 </h2>
             }
         >
-            <Head title="Arsip Statis" />
+            <Head title="Arsip Kepegawaian" />
 
             <div className="py-12 bg-gray-50 min-h-screen">
                 <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
                     <div className="bg-white overflow-hidden shadow-lg sm:rounded-xl border-t-4 border-primary">
                         <div className="p-6 text-gray-900">
                             <div className="flex justify-between items-center mb-6">
-                                <h3 className="text-2xl font-bold text-primary">Daftar Arsip Statis</h3>
+                                <h3 className="text-2xl font-bold text-primary">Daftar Arsip Kepegawaian</h3>
                                 <Link href={route('arsip-statis.create')} className="bg-primary hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-all duration-300">
                                     + Tambah Arsip Baru
                                 </Link>
@@ -62,6 +62,9 @@ export default function Index({ arsip, filters = {} }) {
                                     <option value="cetak">Cetak</option>
                                     <option value="cd">CD</option>
                                     <option value="lainnya">Lainnya</option>
+                                    <option value="rilis">Rilis Berita</option>
+                                    <option value="kliping">Kliping</option>
+                                    <option value="dokumentasi">Dokumentasi</option>
                                 </select>
                                 <input
                                     type="date"
@@ -92,7 +95,7 @@ export default function Index({ arsip, filters = {} }) {
                                             <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Judul / Deskripsi</th>
                                             <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Tanggal Asli</th>
                                             <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Asal Dokumen</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Jenis Asli</th>
+                                             <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Jenis / Modul</th>
                                             <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Aksi</th>
                                         </tr>
                                     </thead>
@@ -100,12 +103,12 @@ export default function Index({ arsip, filters = {} }) {
                                         {arsip.length === 0 ? (
                                             <tr>
                                                 <td colSpan="5" className="px-6 py-12 text-center text-gray-500 italic">
-                                                    Belum ada data arsip statis terdaftar.
+                                                    Belum ada data arsip kepegawaian terdaftar.
                                                 </td>
                                             </tr>
                                         ) : (
                                             arsip.map((item) => (
-                                                <tr key={item.id} className="hover:bg-gray-50">
+                                                <tr key={item.key} className="hover:bg-gray-50">
                                                     <td className="px-6 py-4 text-sm font-medium text-gray-900">
                                                         <div>{item.judul}</div>
                                                         <div className="mt-1 text-xs font-normal text-gray-500">{item.deskripsi || '-'}</div>
@@ -118,11 +121,12 @@ export default function Index({ arsip, filters = {} }) {
                                                         </span>
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                                        <Link href={route('arsip-statis.edit', item.id)} className="text-primary-light hover:text-blue-900 mr-3">Edit</Link>
-                                                        <Link 
-                                                            as="button" 
-                                                            method="delete" 
-                                                            href={route('arsip-statis.destroy', item.id)} 
+                                                        {item.file_url && <a href={item.file_url} target="_blank" rel="noopener noreferrer" className="mr-3 text-primary-light hover:text-blue-900">Buka</a>}
+                                                        <Link href={item.edit_url} className="text-primary-light hover:text-blue-900 mr-3">Edit</Link>
+                                                        <Link
+                                                            as="button"
+                                                            method="delete"
+                                                            href={item.delete_url}
                                                             onClick={(e) => {
                                                                 if(!confirm('Yakin ingin menghapus arsip ini?')) e.preventDefault();
                                                             }}

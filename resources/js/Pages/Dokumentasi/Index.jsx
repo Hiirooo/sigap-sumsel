@@ -1,10 +1,18 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
 export default function Index({ dokumentasi, filters = {} }) {
+    const pageProps = usePage().props;
+    const isAdmin = pageProps.auth.user.role === 'admin';
+    const success = pageProps.flash?.success;
     const [updatingStatus, setUpdatingStatus] = useState(null);
+    const [deletingAll, setDeletingAll] = useState(false);
+    const [deletingSelected, setDeletingSelected] = useState(false);
+    const [selectedIds, setSelectedIds] = useState([]);
     const items = Array.isArray(dokumentasi) ? dokumentasi : (dokumentasi.data || []);
+    const visibleIds = items.map((item) => item.id);
+    const allVisibleSelected = visibleIds.length > 0 && visibleIds.every((id) => selectedIds.includes(id));
     const currentPage = dokumentasi.current_page || 1;
     const lastPage = dokumentasi.last_page || 1;
     const pageNumbers = Array.from(new Set([
@@ -62,6 +70,61 @@ export default function Index({ dokumentasi, filters = {} }) {
         });
     };
 
+    const deleteAll = () => {
+        if (deletingAll || dokumentasi.total === 0) return;
+
+        const firstWarning = confirm(
+            `PERINGATAN: Anda akan menghapus seluruh ${dokumentasi.total} inventaris dokumentasi beserta semua foto, video, thumbnail, dan data databasenya. Tindakan ini tidak dapat dibatalkan. Lanjutkan?`
+        );
+        if (!firstWarning) return;
+
+        const finalWarning = confirm(
+            'KONFIRMASI TERAKHIR: Semua dokumentasi akan hilang permanen. Apakah Anda benar-benar yakin?'
+        );
+        if (!finalWarning) return;
+
+        setDeletingAll(true);
+        router.delete(route('dokumentasi.destroy-all'), {
+            preserveScroll: true,
+            onFinish: () => setDeletingAll(false),
+        });
+    };
+
+    const toggleSelection = (id) => {
+        setSelectedIds((current) => (
+            current.includes(id)
+                ? current.filter((selectedId) => selectedId !== id)
+                : [...current, id]
+        ));
+    };
+
+    const toggleSelectAllVisible = () => {
+        setSelectedIds((current) => {
+            if (allVisibleSelected) {
+                return current.filter((id) => !visibleIds.includes(id));
+            }
+
+            return Array.from(new Set([...current, ...visibleIds]));
+        });
+    };
+
+    const deleteSelected = () => {
+        if (deletingSelected || selectedIds.length === 0) return;
+
+        const confirmed = confirm(
+            `PERINGATAN: ${selectedIds.length} dokumentasi yang ditandai akan dihapus permanen dari database beserta seluruh foto, video, dan thumbnail terkait. Tindakan ini tidak dapat dibatalkan. Lanjutkan?`
+        );
+        if (!confirmed) return;
+
+        setDeletingSelected(true);
+        router.delete(route('dokumentasi.destroy-selected'), {
+            data: { ids: selectedIds },
+            preserveScroll: true,
+            onSuccess: () => setSelectedIds([]),
+            onFinish: () => setDeletingSelected(false),
+        });
+    };
+
     return (
         <AuthenticatedLayout
             header={
@@ -76,12 +139,65 @@ export default function Index({ dokumentasi, filters = {} }) {
                 <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
                     <div className="overflow-hidden bg-white shadow-lg sm:rounded-xl border-t-4 border-primary">
                         <div className="p-6 text-gray-900">
-                            <div className="flex justify-between items-center mb-6">
+                            {success && (
+                                <div className="mb-6 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800">
+                                    {success}
+                                </div>
+                            )}
+
+                            <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                                 <h3 className="text-2xl font-bold text-primary">Inventaris Dokumentasi</h3>
-                                <Link href={route('dokumentasi.create')} className="bg-gold hover:bg-gold-light text-primary-dark font-bold py-2 px-4 rounded-lg shadow-md transition-all duration-300">
-                                    + Upload Media
-                                </Link>
+                                <div className="flex flex-wrap gap-3">
+                                    {isAdmin && dokumentasi.total > 0 && (
+                                        <button
+                                            type="button"
+                                            onClick={deleteAll}
+                                            disabled={deletingAll}
+                                            className="rounded-lg border border-red-600 bg-red-50 px-4 py-2 font-bold text-red-700 shadow-sm transition hover:bg-red-600 hover:text-white disabled:cursor-wait disabled:opacity-60"
+                                        >
+                                            {deletingAll ? 'Menghapus Semua...' : 'Hapus Semua Dokumentasi'}
+                                        </button>
+                                    )}
+                                    <Link href={route('dokumentasi.create')} className="bg-gold hover:bg-gold-light text-primary-dark font-bold py-2 px-4 rounded-lg shadow-md transition-all duration-300">
+                                        + Upload Media
+                                    </Link>
+                                </div>
                             </div>
+
+                            {isAdmin && dokumentasi.total > 0 && (
+                                <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+                                    <span className="font-bold">Peringatan:</span> tombol hapus semua akan menghapus permanen seluruh data dokumentasi dari database beserta foto, video, dan thumbnail pada penyimpanan. Tindakan ini tidak dapat dibatalkan.
+                                </div>
+                            )}
+
+                            {items.length > 0 && (
+                                <div className="mb-6 flex flex-col gap-3 rounded-lg border border-gray-200 bg-gray-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+                                    <label className="inline-flex cursor-pointer items-center gap-3 text-sm font-semibold text-gray-700">
+                                        <input
+                                            type="checkbox"
+                                            checked={allVisibleSelected}
+                                            onChange={toggleSelectAllVisible}
+                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
+                                        />
+                                        Pilih semua card di halaman ini
+                                    </label>
+                                    <div className="flex flex-wrap items-center gap-3">
+                                        {selectedIds.length > 0 && (
+                                            <span className="text-sm font-bold text-red-700">
+                                                {selectedIds.length} dokumentasi ditandai untuk dihapus permanen
+                                            </span>
+                                        )}
+                                        <button
+                                            type="button"
+                                            onClick={deleteSelected}
+                                            disabled={selectedIds.length === 0 || deletingSelected}
+                                            className="rounded-lg bg-red-600 px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+                                        >
+                                            {deletingSelected ? 'Menghapus...' : `Hapus yang Ditandai (${selectedIds.length})`}
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
 
                             <form onSubmit={applyFilter} className="mb-6 grid grid-cols-1 gap-4 rounded-lg border bg-gray-50 p-4 md:grid-cols-5">
                                 <input
@@ -138,7 +254,17 @@ export default function Index({ dokumentasi, filters = {} }) {
                                     </div>
                                 ) : (
                                     items.map((item) => (
-                                        <div key={item.id} className="bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                                        <div key={item.id} className={`relative overflow-hidden rounded-lg border bg-white shadow-sm transition-all hover:shadow-md ${selectedIds.includes(item.id) ? 'border-red-500 ring-2 ring-red-200' : ''}`}>
+                                            <label className="absolute left-3 top-3 z-10 flex cursor-pointer items-center gap-2 rounded-lg bg-white/95 px-3 py-2 text-xs font-bold text-gray-800 shadow-md backdrop-blur">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedIds.includes(item.id)}
+                                                    onChange={() => toggleSelection(item.id)}
+                                                    aria-label={`Tandai ${item.judul}`}
+                                                    className="h-5 w-5 rounded border-gray-300 text-red-600 focus:ring-red-500"
+                                                />
+                                                Tandai
+                                            </label>
                                             <div className="h-48 bg-gray-900 flex items-center justify-center overflow-hidden">
                                             {item.media_items?.[0]?.jenis_media === 'foto' ? (
                                                 <img src={item.media_items[0].file_url} alt={item.judul} className="h-full w-full object-cover" />
@@ -152,18 +278,20 @@ export default function Index({ dokumentasi, filters = {} }) {
                                             )}
                                         </div>
                                             <div className="p-4">
-                                                <div className="flex justify-between items-start">
+                                                <div className="flex flex-wrap justify-between gap-2 items-start">
                                                     <h4 className="font-semibold text-lg mb-2">{item.judul}</h4>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => toggleStatus(item)}
-                                                        disabled={updatingStatus === item.id}
-                                                        title="Klik untuk mengubah status"
-                                                        className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-bold transition-all disabled:cursor-wait disabled:opacity-60 ${statusClass[item.status_verifikasi] || statusClass.draft}`}
-                                                    >
-                                                        <span className="h-1.5 w-1.5 rounded-full bg-current" />
-                                                        {item.status_verifikasi}
-                                                    </button>
+                                                    <div className="flex flex-wrap justify-end gap-2">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => toggleStatus(item)}
+                                                            disabled={updatingStatus === item.id}
+                                                            title="Klik untuk mengubah status"
+                                                            className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-bold transition-all disabled:cursor-wait disabled:opacity-60 ${statusClass[item.status_verifikasi] || statusClass.draft}`}
+                                                        >
+                                                            <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                                                            {item.status_verifikasi}
+                                                        </button>
+                                                    </div>
                                                 </div>
                                                 <div className="text-sm text-gray-500 mb-2">📅 {item.tanggal}</div>
                                                 <div className="text-sm text-gray-600">Pimpinan: {item.pimpinan_terkait || '-'}</div>

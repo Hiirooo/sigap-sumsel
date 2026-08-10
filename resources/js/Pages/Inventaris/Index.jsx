@@ -1,30 +1,66 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 
-export default function Index({ stats, items = [], filters = {} }) {
+export default function Index({ stats, items: paginator, filters = {} }) {
+    const items = Array.isArray(paginator) ? paginator : (paginator?.data || []);
+    const currentPage = paginator?.current_page || 1;
+    const lastPage = paginator?.last_page || 1;
+    const perPageOptions = [10, 15, 25, 50, 100, 'all'];
+    const pageNumbers = Array.from(new Set([
+        1,
+        lastPage,
+        currentPage - 2,
+        currentPage - 1,
+        currentPage,
+        currentPage + 1,
+        currentPage + 2,
+    ]))
+        .filter((page) => page >= 1 && page <= lastPage)
+        .sort((a, b) => a - b);
+
     const [values, setValues] = useState({
         search: filters.search || '',
         jenis_dokumen: filters.jenis_dokumen || '',
         tanggal_mulai: filters.tanggal_mulai || '',
         tanggal_selesai: filters.tanggal_selesai || '',
+        per_page: filters.per_page || '15',
+        bulan: filters.bulan || '',
+        ukuran_kertas: filters.ukuran_kertas || 'A4',
     });
+
+    const setMonth = (month) => {
+        if (month) {
+            const [y, m] = month.split('-');
+            const lastDay = new Date(parseInt(y, 10), parseInt(m, 10), 0).getDate();
+            const lastDayStr = `${lastDay}`.padStart(2, '0');
+            setValues((prev) => ({ ...prev, bulan: month, tanggal_mulai: `${month}-01`, tanggal_selesai: `${month}-${lastDayStr}` }));
+        } else {
+            setValues((prev) => ({ ...prev, bulan: '', tanggal_mulai: '', tanggal_selesai: '' }));
+        }
+    };
+
+    const setDateRange = (field, value) => {
+        setValues((prev) => ({ ...prev, [field]: value, bulan: '' }));
+    };
+
+    const activePerPage = values.per_page === 'all' ? paginator?.total || items.length : values.per_page;
 
     const applyFilter = (e) => {
         e.preventDefault();
-        router.get(route('inventaris.index'), values, {
+        router.get(route('inventaris.index'), { ...values, page: 1 }, {
             preserveState: true,
             replace: true,
         });
     };
 
     const resetFilter = () => {
-        setValues({ search: '', jenis_dokumen: '', tanggal_mulai: '', tanggal_selesai: '' });
+        setValues({ search: '', jenis_dokumen: '', tanggal_mulai: '', tanggal_selesai: '', per_page: '15', bulan: '', ukuran_kertas: 'A4' });
         router.get(route('inventaris.index'), {}, { preserveState: true, replace: true });
     };
 
     const queryString = new URLSearchParams(Object.fromEntries(
-        Object.entries(filters).filter(([, value]) => value)
+        Object.entries({ ...filters, ukuran_kertas: values.ukuran_kertas || 'A4' }).filter(([, value]) => value)
     )).toString();
     const pdfUrl = `${route('inventaris.cetak-pdf')}${queryString ? `?${queryString}` : ''}`;
 
@@ -66,7 +102,7 @@ export default function Index({ stats, items = [], filters = {} }) {
                                 <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                             </div>
                             <div className="ml-4">
-                                <div className="text-sm text-gray-500">Arsip Statis</div>
+                                <div className="text-sm text-gray-500">Arsip Kepegawaian</div>
                                 <div className="text-2xl font-bold text-gray-900">{stats.arsip_statis || 0}</div>
                             </div>
                         </div>
@@ -78,7 +114,7 @@ export default function Index({ stats, items = [], filters = {} }) {
                                 <h3 className="text-2xl font-bold text-primary">Daftar Inventaris Dokumentasi</h3>
                             </div>
 
-                            <form onSubmit={applyFilter} className="mb-6 grid grid-cols-1 gap-4 rounded-lg border bg-gray-50 p-4 md:grid-cols-5">
+                            <form onSubmit={applyFilter} className="mb-6 grid grid-cols-1 gap-4 rounded-lg border bg-gray-50 p-4 md:grid-cols-7">
                                 <input
                                     type="text"
                                     value={values.search}
@@ -94,22 +130,37 @@ export default function Index({ stats, items = [], filters = {} }) {
                                     <option value="">Semua Dokumen</option>
                                     <option value="rilis_berita">Rilis Berita</option>
                                     <option value="dokumentasi">Dokumentasi</option>
-                                    <option value="arsip_statis">Arsip Statis</option>
+                                    <option value="arsip_statis">Arsip Kepegawaian</option>
                                     <option value="kliping">Kliping</option>
                                 </select>
                                 <input
+                                    type="month"
+                                    value={values.bulan}
+                                    onChange={(e) => setMonth(e.target.value)}
+                                    className="rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
+                                />
+                                <input
                                     type="date"
                                     value={values.tanggal_mulai}
-                                    onChange={(e) => setValues({ ...values, tanggal_mulai: e.target.value })}
+                                    onChange={(e) => setDateRange('tanggal_mulai', e.target.value)}
                                     className="rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
                                 />
                                 <input
                                     type="date"
                                     value={values.tanggal_selesai}
-                                    onChange={(e) => setValues({ ...values, tanggal_selesai: e.target.value })}
+                                    onChange={(e) => setDateRange('tanggal_selesai', e.target.value)}
                                     className="rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
                                 />
-                                <div className="flex gap-2 md:col-span-5">
+                                <select
+                                    value={values.per_page}
+                                    onChange={(e) => setValues({ ...values, per_page: e.target.value })}
+                                    className="rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
+                                >
+                                    {perPageOptions.map((opt) => (
+                                        <option key={opt} value={opt}>{opt === 'all' ? 'Semua' : `${opt} per halaman`}</option>
+                                    ))}
+                                </select>
+                                <div className="flex gap-2 md:col-span-7">
                                     <button type="submit" className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-dark">
                                         Terapkan Filter
                                     </button>
@@ -152,10 +203,61 @@ export default function Index({ stats, items = [], filters = {} }) {
                                 </table>
                             </div>
 
+                            {lastPage > 1 && (
+                                <div className="mt-5 flex flex-col items-center justify-between gap-3 border-t border-gray-100 pt-5 sm:flex-row">
+                                    <p className="text-sm text-gray-500">
+                                        Menampilkan <strong className="font-semibold text-gray-900">{paginator?.from || 0}-{paginator?.to || 0}</strong> dari <strong className="font-semibold text-gray-900">{paginator?.total ?? items.length}</strong> dokumen
+                                    </p>
+                                    <nav className="flex flex-wrap items-center justify-center gap-1" aria-label="Pagination inventaris">
+                                        <Link
+                                            href={paginator?.prev_page_url || '#'}
+                                            preserveScroll
+                                            className={`rounded-lg border px-3 py-2 text-sm font-semibold ${paginator?.prev_page_url ? 'border-gray-300 text-gray-700 hover:border-primary hover:text-primary' : 'pointer-events-none border-gray-200 text-gray-300'}`}
+                                        >
+                                            Sebelumnya
+                                        </Link>
+                                        {pageNumbers.map((page, index) => (
+                                            <span key={page} className="contents">
+                                                {index > 0 && pageNumbers[index - 1] !== page - 1 && <span className="px-1 text-gray-400">...</span>}
+                                                <Link
+                                                    href={`${paginator?.path}?${new URLSearchParams(Object.fromEntries(Object.entries({ ...filters, page, per_page: values.per_page, bulan: values.bulan || undefined }).filter(([, v]) => v !== undefined && v !== ''))).toString()}`}
+                                                    preserveScroll
+                                                    className={`min-w-10 rounded-lg px-3 py-2 text-center text-sm font-bold ${page === currentPage ? 'bg-primary text-white shadow-sm' : 'border border-gray-300 text-gray-700 hover:border-primary hover:text-primary'}`}
+                                                >
+                                                    {page}
+                                                </Link>
+                                            </span>
+                                        ))}
+                                        <Link
+                                            href={paginator?.next_page_url || '#'}
+                                            preserveScroll
+                                            className={`rounded-lg border px-3 py-2 text-sm font-semibold ${paginator?.next_page_url ? 'border-gray-300 text-gray-700 hover:border-primary hover:text-primary' : 'pointer-events-none border-gray-200 text-gray-300'}`}
+                                        >
+                                            Berikutnya
+                                        </Link>
+                                    </nav>
+                                </div>
+                            )}
+
                             <div className="mt-10 border-t pt-8">
                                 <h4 className="text-lg font-semibold text-primary mb-4">Cetak Laporan</h4>
-                                <p className="text-gray-600 mb-6">Anda dapat mencetak laporan rekapitulasi data sesuai filter aktif ke dalam format dokumen PDF.</p>
-                                
+                                <p className="text-gray-600 mb-4">Cetak laporan rekapitulasi data terpublikasi sesuai filter ke dalam format dokumen PDF. Gunakan filter <strong>Bulan</strong> untuk mencetak laporan per bulan.</p>
+                                <div className="mb-4 flex items-center gap-4">
+                                    <span className="text-sm font-semibold text-gray-700">Ukuran Kertas:</span>
+                                    {['A4', 'F4'].map((ukuran) => (
+                                        <label key={ukuran} className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                name="ukuran_kertas"
+                                                value={ukuran}
+                                                checked={values.ukuran_kertas === ukuran}
+                                                onChange={(e) => setValues({ ...values, ukuran_kertas: e.target.value })}
+                                                className="text-primary focus:ring-primary"
+                                            />
+                                            {ukuran}
+                                        </label>
+                                    ))}
+                                </div>
                                 <a href={pdfUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center px-6 py-3 bg-primary hover:bg-primary-light text-white font-semibold rounded-lg shadow-md transition">
                                     <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
                                     Cetak PDF Laporan

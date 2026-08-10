@@ -138,7 +138,6 @@ export default function Edit({ rilisBerita }) {
                                         <select value={data.status} onChange={e => setData('status', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm">
                                             <option value="draft">Draft</option>
                                             <option value="terpublikasi">Terpublikasi</option>
-                                            <option value="diarsipkan">Diarsipkan</option>
                                         </select>
                                     </div>
                                 </div>

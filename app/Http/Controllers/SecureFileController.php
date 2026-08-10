@@ -10,12 +10,16 @@ use App\Models\RilisBerita;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\Response;
 use App\Services\RemoteFileCache;
+use App\Services\ArticleSentimentService;
 
 class SecureFileController extends Controller
 {
     private array $disks = ['local', 'google-drive', 'public'];
 
-    public function __construct(private RemoteFileCache $fileCache)
+    public function __construct(
+        private RemoteFileCache $fileCache,
+        private ArticleSentimentService $articleService,
+    )
     {
     }
 
@@ -49,7 +53,11 @@ class SecureFileController extends Controller
 
     public function kliping(Kliping $kliping): Response
     {
-        return $this->response($kliping->file_path);
+        return $this->response(
+            $kliping->file_path,
+            fallbackUrl: $kliping->url,
+            recover: fn () => $this->articleService->recoverKlipingImage($kliping),
+        );
     }
 
     public function rilisImage(RilisBerita $rilis): Response
@@ -71,30 +79,47 @@ class SecureFileController extends Controller
         return $this->response($arsip->file_path);
     }
 
-    private function response(?string $path, ?array $disks = null): Response
+    private function response(?string $path, ?array $disks = null, ?string $fallbackUrl = null, ?callable $recover = null): Response
     {
-        abort_if(! $path, 404);
+        if ($path) {
+            $path = str_starts_with($path, '/storage/')
+                ? ltrim(str_replace('/storage/', '', $path), '/')
+                : (str_starts_with($path, 'public/') ? substr($path, 7) : $path);
 
-        $path = str_starts_with($path, '/storage/')
-            ? ltrim(str_replace('/storage/', '', $path), '/')
-            : (str_starts_with($path, 'public/') ? substr($path, 7) : $path);
-
-        foreach (array_unique($disks ?? $this->disks) as $disk) {
-            if ($disk === 'google-drive' && ($cachePath = $this->fileCache->get($path))) {
-                return $this->localResponse('local', $cachePath);
-            }
-
-            if (Storage::disk($disk)->exists($path)) {
-                if ($disk === 'google-drive') {
-                    $cachePath = $this->fileCache->remember($disk, $path);
+            foreach (array_unique($disks ?? $this->disks) as $disk) {
+                if ($disk === 'google-drive' && ($cachePath = $this->fileCache->get($path))) {
                     return $this->localResponse('local', $cachePath);
                 }
 
-                return $this->localResponse($disk, $path);
+                if (Storage::disk($disk)->exists($path)) {
+                    if ($disk === 'google-drive') {
+                        $cachePath = $this->fileCache->remember($disk, $path);
+                        return $this->localResponse('local', $cachePath);
+                    }
+
+                    return $this->localResponse($disk, $path);
+                }
             }
         }
 
+        if ($recover && ($recoveredPath = $recover())) {
+            return $this->response($recoveredPath, $disks, $fallbackUrl);
+        }
+
+        if ($this->isSafeExternalUrl($fallbackUrl)) {
+            return redirect()->away($fallbackUrl);
+        }
+
         abort(404);
+    }
+
+    private function isSafeExternalUrl(?string $url): bool
+    {
+        if (! $url || ! filter_var($url, FILTER_VALIDATE_URL)) {
+            return false;
+        }
+
+        return in_array(parse_url($url, PHP_URL_SCHEME), ['http', 'https'], true);
     }
 
     private function cacheHeaders(): array

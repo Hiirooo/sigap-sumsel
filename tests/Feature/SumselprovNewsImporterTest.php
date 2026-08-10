@@ -38,8 +38,8 @@ class SumselprovNewsImporterTest extends TestCase
 
         $importer = app(SumselprovNewsImporter::class);
 
-        $first = $importer->import(1);
-        $second = $importer->import(1);
+        $first = $importer->import(1, 'api_berita_all2');
+        $second = $importer->import(1, 'api_berita_all2');
 
         $this->assertSame(1, $first['created']);
         $this->assertSame(1, $second['skipped']);
@@ -47,6 +47,7 @@ class SumselprovNewsImporterTest extends TestCase
         $this->assertDatabaseHas('rilis_beritas', [
             'slug' => 'berita-sumsel',
             'status' => 'terpublikasi',
+            'is_archived' => true,
             'media_publikasi' => 'sumselprov.go.id',
             'gambar_utama' => 'uploads/rilis/sumselprov/berita-sumsel.webp',
         ]);
@@ -82,7 +83,7 @@ class SumselprovNewsImporterTest extends TestCase
             'https://sumselprov.go.id/storage/*' => Http::response(base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII='), 200, ['Content-Type' => 'image/png']),
         ]);
 
-        app(SumselprovNewsImporter::class)->import(1);
+        app(SumselprovNewsImporter::class)->import(1, 'api_berita_all2');
 
         $path = 'uploads/rilis/sumselprov/berita-format-asli.png';
         $this->assertDatabaseHas('rilis_beritas', ['gambar_utama' => $path]);
@@ -104,7 +105,7 @@ class SumselprovNewsImporterTest extends TestCase
         $operator = User::factory()->create(['role' => 'operator']);
 
         $this->actingAs($operator)
-            ->postJson(route('rilis-berita.sync-sumselprov'), ['page' => 2])
+            ->postJson(route('rilis-berita.sync-sumselprov'), ['page' => 2, 'endpoint' => 'api_berita_all2'])
             ->assertOk()
             ->assertJson([
                 'current_page' => 2,
@@ -116,6 +117,99 @@ class SumselprovNewsImporterTest extends TestCase
                 'skipped' => 0,
                 'failed' => 0,
             ]);
+    }
+
+    public function test_it_falls_back_to_next_sumselprov_endpoint_when_first_fails(): void
+    {
+        config(['services.sumselprov.api_endpoints' => ['api_berita_all2', 'api_berita_sumsel3']]);
+        Http::fake([
+            '*/api_berita_all2*' => Http::response([], 404),
+            '*/api_berita_sumsel3*' => Http::response([[
+                'judul' => 'Berita API Baru',
+                'slug' => 'berita-api-baru',
+                'tgl' => 'Tuesday, 28 July 2026',
+                'filegambar' => 'https://sumselprov.go.id/storage/berita/gambar-baru.jpg',
+            ]]),
+        ]);
+
+        $result = app(SumselprovNewsImporter::class)->previewPage(1);
+
+        $this->assertCount(1, $result['items']);
+        $this->assertSame('berita-api-baru', $result['items'][0]['slug']);
+    }
+
+    public function test_it_combines_old_and_new_sumselprov_api_formats_without_duplicate_slugs(): void
+    {
+        config(['services.sumselprov.api_endpoints' => ['api_berita_sumsel3', 'api_berita_all2']]);
+        Http::fake([
+            '*/api_berita_sumsel3*' => Http::response([[
+                'judul' => 'Berita API Baru',
+                'slug' => 'berita-api-baru',
+                'tgl' => 'Tuesday, 28 July 2026',
+                'filegambar' => 'https://sumselprov.go.id/storage/berita/gambar-baru.jpg',
+            ], [
+                'judul' => 'Berita Sama',
+                'slug' => 'berita-sama',
+                'tgl' => 'Tuesday, 28 July 2026',
+                'filegambar' => 'https://sumselprov.go.id/storage/berita/gambar-sama.jpg',
+            ]]),
+            '*/api_berita_all2*' => Http::response([
+                'data' => [[
+                    'judul' => 'Berita API Lama',
+                    'slug' => 'berita-api-lama',
+                    'tgl' => '2026-07-28 08:00:00',
+                    'filegambar' => 'public/berita/gambar-lama.jpg',
+                ], [
+                    'judul' => 'Berita Sama Lama',
+                    'slug' => 'berita-sama',
+                    'tgl' => '2026-07-28 09:00:00',
+                    'filegambar' => 'public/berita/gambar-sama-lama.jpg',
+                ]],
+                'current_page' => 1,
+                'last_page' => 4,
+            ]),
+        ]);
+
+        $result = app(SumselprovNewsImporter::class)->previewPage(1);
+
+        $this->assertSame(4, $result['last_page']);
+        $this->assertSame([
+            'berita-api-baru',
+            'berita-sama',
+            'berita-api-lama',
+        ], array_column($result['items'], 'slug'));
+    }
+
+    public function test_it_imports_new_sumselprov_api_item_even_when_detail_endpoint_is_missing(): void
+    {
+        config([
+            'services.sumselprov.api_endpoints' => ['api_berita_sumsel3'],
+            'services.rilis.image_convert_webp' => true,
+            'services.rilis.image_storage_disk' => 'local',
+        ]);
+        Storage::fake('local');
+        Http::fake([
+            '*/api_berita_sumsel3*' => Http::response([[
+                'judul' => 'Berita API Baru',
+                'slug' => 'berita-api-baru',
+                'tgl' => 'Tuesday, 28 July 2026',
+                'filegambar' => 'https://sumselprov.go.id/storage/berita/gambar-baru.jpg',
+            ]]),
+            '*/beritadetailslug*' => Http::response(['message' => 'Not Found'], 404),
+            'https://sumselprov.go.id/storage/*' => Http::response(base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII='), 200, ['Content-Type' => 'image/png']),
+        ]);
+
+        $result = app(SumselprovNewsImporter::class)->import(1);
+
+        $this->assertSame(1, $result['created']);
+        $this->assertDatabaseHas('rilis_beritas', [
+            'judul' => 'Berita API Baru',
+            'slug' => 'berita-api-baru',
+            'tanggal_rilis' => '2026-07-28',
+            'isi' => '',
+            'gambar_utama' => 'uploads/rilis/sumselprov/berita-api-baru.webp',
+        ]);
+        Storage::disk('local')->assertExists('uploads/rilis/sumselprov/berita-api-baru.webp');
     }
 
     public function test_duplicate_actions_overwrite_or_delete_and_reimport_as_selected(): void

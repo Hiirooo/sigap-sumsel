@@ -1,4 +1,4 @@
-import { useEffect, useId } from 'react';
+import { useEffect, useId, useRef } from 'react';
 
 const TINYMCE_SRC = 'https://cdn.tiny.cloud/1/5resq762k4sk67ndud5u3evnk9px1iz6p2i7528fkus38ahz/tinymce/6/tinymce.min.js';
 
@@ -34,6 +34,9 @@ function loadTinyMce() {
 export default function RichTextEditor({ value, onChange, textareaClassName = '' }) {
     const reactId = useId();
     const editorId = `editor-${reactId.replace(/:/g, '')}`;
+    const valueRef = useRef(value);
+
+    valueRef.current = value;
 
     useEffect(() => {
         let active = true;
@@ -57,7 +60,7 @@ export default function RichTextEditor({ value, onChange, textareaClassName = ''
                 branding: false,
                 promotion: false,
                 setup: (editor) => {
-                    editor.on('init', () => editor.setContent(value || ''));
+                    editor.on('init', () => editor.setContent(valueRef.current || ''));
                     editor.on('change keyup undo redo', () => onChange(editor.getContent()));
                 },
             });
@@ -70,6 +73,14 @@ export default function RichTextEditor({ value, onChange, textareaClassName = ''
             }
         };
     }, [editorId]);
+
+    useEffect(() => {
+        const editor = window.tinymce?.get(editorId);
+
+        if (editor?.initialized && editor.getContent() !== (value || '')) {
+            editor.setContent(value || '');
+        }
+    }, [editorId, value]);
 
     return (
         <textarea

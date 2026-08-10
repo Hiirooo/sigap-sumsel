@@ -2,93 +2,151 @@ import { Head, Link } from '@inertiajs/react';
 import ApplicationLogo from '@/Components/ApplicationLogo';
 
 export default function Welcome({ auth }) {
-    const features = [
-        'Rilis berita',
-        'Galeri dokumentasi',
-        'Kliping media',
-        'Arsip statis',
-        'Inventaris laporan',
-        'Monev tindak lanjut',
+    const modules = [
+        { name: 'Rilis Berita', description: 'Publikasi resmi dan distribusi informasi', href: route('public.rilis.index') },
+        { name: 'Galeri Dokumentasi', description: 'Foto dan video kegiatan pemerintahan', href: route('public.galeri.index') },
+        { name: 'Kliping Media', description: 'Pemantauan pemberitaan dan sentimen', href: route('public.kliping.index') },
+        { name: 'Arsip Kepegawaian', description: 'Dokumen pegawai yang tertata dan mudah ditelusuri' },
+        { name: 'Inventaris Laporan', description: 'Rekapitulasi data pelaporan internal' },
+        { name: 'Monev Tindak Lanjut', description: 'Monitoring progres secara terukur' },
     ];
+    const destination = auth.user ? route('dashboard') : route('login');
 
     return (
-        <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-emerald-950 via-primary to-emerald-800 text-white">
-            <Head title="SIGAP SUMSEL" />
-            <div className="absolute -left-24 top-16 h-72 w-72 rounded-full bg-gold/20 blur-3xl" />
-            <div className="absolute -right-20 bottom-10 h-96 w-96 rounded-full bg-emerald-300/10 blur-3xl" />
+        <div className="relative flex min-h-screen flex-col overflow-hidden bg-[#06142c] text-white">
+            <Head title="SIGAP Sumatera Selatan" />
 
-            <header className="relative z-10 mx-auto flex max-w-7xl items-center justify-between px-6 py-6 lg:px-8">
-                <Link href="/" className="flex items-center gap-3">
-                    <span className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl border border-white/30 bg-white p-2 shadow-lg">
-                        <ApplicationLogo className="h-full w-full object-contain" />
-                    </span>
-                    <span className="leading-tight">
-                        <span className="block text-sm font-black uppercase tracking-[0.22em] text-gold">SIGAP Sumsel</span>
-                        <span className="block text-xs font-semibold text-white/70">Biro Humas dan Protokol</span>
-                    </span>
-                </Link>
+            <div className="absolute inset-0">
+                <img
+                    src="/images/login-kantor.png"
+                    alt="Kantor Gubernur Sumatera Selatan"
+                    className="h-full w-full object-cover object-center opacity-60"
+                />
+                <div className="absolute inset-0 bg-gradient-to-r from-[#06142c] via-[#06142c]/90 to-[#06142c]/25" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#06142c] via-[#06142c]/20 to-[#06142c]/75" />
+            </div>
 
-                <Link
-                    href={auth.user ? route('dashboard') : route('login')}
-                    className="rounded-full border border-white/25 bg-white/10 px-5 py-2 text-sm font-bold text-white shadow-sm backdrop-blur transition hover:bg-white hover:text-emerald-950"
-                >
-                    {auth.user ? 'Dashboard' : 'Login'}
-                </Link>
+            <div className="pointer-events-none absolute -left-24 top-1/3 h-80 w-80 rounded-full bg-primary-light/20 blur-[110px]" />
+            <div className="pointer-events-none absolute right-0 top-0 h-64 w-64 opacity-20 [background-image:repeating-linear-gradient(135deg,transparent_0,transparent_13px,#c9a84c_14px,transparent_15px)]" />
+
+            <header className="relative z-20 border-b border-white/10">
+                <div className="mx-auto flex max-w-[1440px] items-center justify-between px-5 py-5 sm:px-8 lg:px-12">
+                    <Link href="/" className="flex min-w-0 items-center gap-4">
+                        <span className="flex shrink-0 items-center rounded-xl bg-white px-3 py-2 shadow-xl shadow-black/20 ring-1 ring-white/40">
+                            <ApplicationLogo className="h-9 w-auto object-contain sm:h-11" />
+                        </span>
+                        <span className="hidden leading-tight sm:block">
+                            <span className="block text-lg font-extrabold tracking-[-0.015em] text-white">SIGAP <span className="font-medium text-gold-light">SUMSEL</span></span>
+                            <span className="mt-1 block text-[9px] font-bold uppercase tracking-[0.22em] text-white/60">Akurat · Responsif · Mantap</span>
+                        </span>
+                    </Link>
+
+                    <div className="flex items-center gap-4">
+                        <span className="hidden text-[10px] font-bold uppercase tracking-[0.24em] text-white/45 md:block">Portal Internal Pemerintah</span>
+                        <Link
+                            href={destination}
+                            className="group inline-flex items-center gap-3 rounded-full border border-gold/50 bg-[#06142c]/50 px-5 py-2.5 text-xs font-bold uppercase tracking-[0.16em] text-gold-light shadow-lg backdrop-blur-md transition hover:border-gold-light hover:bg-gold hover:text-primary-dark"
+                        >
+                            {auth.user ? 'Dashboard' : 'Masuk Sistem'}
+                            <span className="transition-transform group-hover:translate-x-1">→</span>
+                        </Link>
+                    </div>
+                </div>
             </header>
 
-            <main className="relative z-10 mx-auto grid min-h-[calc(100vh-104px)] max-w-7xl items-center gap-12 px-6 pb-16 pt-6 lg:grid-cols-[1.05fr_0.95fr] lg:px-8">
-                <section>
-                    <div className="mb-6 inline-flex items-center rounded-full border border-gold/40 bg-gold/10 px-4 py-2 text-sm font-bold text-gold shadow-sm">
-                        Sistem Dokumentasi Pemberitaan Terintegrasi
+            <main className="relative z-10 mx-auto grid w-full max-w-[1440px] flex-1 items-center gap-12 px-5 py-12 sm:px-8 lg:grid-cols-[minmax(0,1.08fr)_minmax(430px,0.72fr)] lg:px-12 lg:py-16 xl:gap-20">
+                <section className="max-w-4xl">
+                    <div className="mb-7 flex items-center gap-4">
+                        <span className="h-px w-12 bg-gold" />
+                        <p className="text-[10px] font-bold uppercase tracking-[0.34em] text-gold-light sm:text-xs">
+                            SIGAP SUMSEL <span className="px-2 text-white/40">|</span> Akurat Responsif Mantap
+                        </p>
                     </div>
-                    <h1 className="max-w-4xl text-4xl font-black leading-tight tracking-tight text-white sm:text-5xl lg:text-6xl">
-                        Pusat kendali dokumentasi dan publikasi Pemerintah Provinsi Sumatera Selatan.
+
+                    <h1 className="font-serif text-[2.8rem] font-semibold leading-[1.05] tracking-[-0.035em] text-white drop-shadow-xl sm:text-6xl lg:text-7xl xl:text-[5.4rem]">
+                        Satu informasi.
+                        <span className="mt-1 block italic text-gold-light">Gerak cepat untuk Sumsel.</span>
                     </h1>
-                    <p className="mt-6 max-w-2xl text-lg leading-8 text-emerald-50/80">
-                        SIGAP membantu Biro Humas dan Protokol mengelola rilis berita, dokumentasi pimpinan, kliping media, arsip statis, inventaris laporan, dan monitoring tindak lanjut dalam satu sistem kerja yang tertib.
+
+                    <p className="mt-7 max-w-2xl border-l border-gold/60 pl-5 text-sm leading-7 text-white/70 sm:text-base sm:leading-8">
+                        Platform kerja terpadu Biro Humas dan Protokol untuk menghadirkan informasi yang akurat, respons yang lebih cepat, serta tata kelola komunikasi publik yang mantap.
                     </p>
 
-                    <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+                    <div className="mt-9 flex flex-col gap-4 sm:flex-row sm:items-center">
                         <Link
-                            href={auth.user ? route('dashboard') : route('login')}
-                            className="inline-flex items-center justify-center rounded-2xl bg-gold px-7 py-4 text-base font-black text-emerald-950 shadow-xl shadow-emerald-950/25 transition hover:-translate-y-0.5 hover:bg-yellow-300"
+                            href={destination}
+                            className="group inline-flex items-center justify-center gap-4 rounded-xl bg-gold px-7 py-4 text-sm font-black uppercase tracking-[0.13em] text-primary-dark shadow-2xl shadow-black/25 transition hover:-translate-y-0.5 hover:bg-gold-light"
                         >
-                            {auth.user ? 'Masuk ke Dashboard' : 'Login Sistem'}
+                            {auth.user ? 'Buka Dashboard' : 'Akses SIGAP'}
+                            <span className="text-lg transition-transform group-hover:translate-x-1">→</span>
                         </Link>
+                        <p className="text-xs font-medium leading-5 text-white/50">
+                            Akses terbatas untuk<br className="hidden sm:block" /> pengguna terotorisasi
+                        </p>
+                    </div>
+
+                    <div className="mt-12 grid max-w-2xl grid-cols-3 divide-x divide-white/15 border-y border-white/10 py-5">
+                        <div className="pr-4">
+                            <p className="font-serif text-xl font-semibold text-gold-light sm:text-2xl">Akurat</p>
+                            <p className="mt-1 text-[8px] font-bold uppercase tracking-[0.16em] text-white/45 sm:text-[9px] sm:tracking-[0.2em]">Data Terverifikasi</p>
+                        </div>
+                        <div className="px-4 sm:px-6">
+                            <p className="font-serif text-xl font-semibold text-gold-light sm:text-2xl">Responsif</p>
+                            <p className="mt-1 text-[8px] font-bold uppercase tracking-[0.16em] text-white/45 sm:text-[9px] sm:tracking-[0.2em]">Gerak Lebih Cepat</p>
+                        </div>
+                        <div className="pl-4 sm:pl-6">
+                            <p className="font-serif text-xl font-semibold text-gold-light sm:text-2xl">Mantap</p>
+                            <p className="mt-1 text-[8px] font-bold uppercase tracking-[0.16em] text-white/45 sm:text-[9px] sm:tracking-[0.2em]">Tata Kelola Andal</p>
+                        </div>
                     </div>
                 </section>
 
-                <section id="modul" className="rounded-[2rem] border border-white/15 bg-white/95 p-6 text-emerald-950 shadow-2xl shadow-emerald-950/30 ring-1 ring-black/5">
-                    <div className="rounded-3xl bg-gradient-to-br from-emerald-50 to-amber-50 p-6">
-                        <div className="flex items-start justify-between gap-4">
+                <section className="relative lg:justify-self-end">
+                    <div className="absolute -inset-3 rounded-[2rem] border border-gold/10" />
+                    <div className="relative overflow-hidden rounded-[1.75rem] border border-white/15 bg-[#081a35]/80 shadow-2xl shadow-black/40 backdrop-blur-xl">
+                        <div className="flex items-center justify-between border-b border-white/10 px-6 py-5 sm:px-7">
                             <div>
-                                <p className="text-sm font-black uppercase tracking-[0.2em] text-emerald-700">Executive Workspace</p>
-                                <h2 className="mt-2 text-3xl font-black text-gray-950">SIGAP Sumsel</h2>
+                                <p className="text-[9px] font-bold uppercase tracking-[0.3em] text-gold-light">Layanan Terintegrasi</p>
+                                <h2 className="mt-1.5 font-serif text-2xl font-semibold text-white">Ekosistem SIGAP</h2>
                             </div>
-                            <span className="rounded-full bg-emerald-900 px-4 py-2 text-xs font-black uppercase tracking-widest text-gold">Internal</span>
+                            <span className="flex h-10 w-10 items-center justify-center rounded-full border border-gold/30 bg-gold/10 font-serif text-sm text-gold-light">SS</span>
                         </div>
 
-                        <div className="mt-8 grid grid-cols-2 gap-3">
-                            {features.map((feature) => (
-                                <div key={feature} className="rounded-2xl border border-emerald-900/10 bg-white p-4 shadow-sm">
-                                    <div className="mb-3 h-2 w-10 rounded-full bg-gold" />
-                                    <p className="text-sm font-black text-gray-900">{feature}</p>
-                                </div>
-                            ))}
+                        <div className="grid sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+                            {modules.map((module, index) => {
+                                const content = (
+                                    <>
+                                        <span className="font-serif text-sm italic text-gold/70">{String(index + 1).padStart(2, '0')}</span>
+                                        <div className="min-w-0 flex-1">
+                                            <h3 className="text-sm font-bold text-white transition group-hover:text-gold-light">{module.name}</h3>
+                                            <p className="mt-1 text-[11px] leading-5 text-white/45">{module.description}</p>
+                                        </div>
+                                        {module.href && <span className="self-center text-gold-light/60 transition group-hover:translate-x-1 group-hover:text-gold-light" aria-hidden="true">→</span>}
+                                    </>
+                                );
+                                const className = "group flex gap-4 border-b border-white/10 px-6 py-5 transition hover:bg-white/[0.06] sm:border-r sm:even:border-r-0 lg:border-r-0 xl:border-r xl:even:border-r-0";
+
+                                return module.href ? (
+                                    <Link key={module.name} href={module.href} className={className}>{content}</Link>
+                                ) : (
+                                    <div key={module.name} className={className}>{content}</div>
+                                );
+                            })}
                         </div>
 
-                        <div className="mt-6 rounded-2xl bg-emerald-950 p-5 text-white">
-                            <p className="text-sm font-bold text-gold">Fokus Sistem</p>
-                            <p className="mt-2 text-sm leading-6 text-white/80">
-                                Menjaga dokumentasi kegiatan, publikasi berita, dan laporan monitoring tetap mudah ditelusuri, terukur, dan siap dilaporkan.
-                            </p>
+                        <div className="flex items-center gap-3 bg-white/[0.04] px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/50">
+                            <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.8)]" />
+                            Portal operasional dan siap digunakan
                         </div>
                     </div>
                 </section>
             </main>
 
-            <footer className="relative z-10 border-t border-white/10 px-6 py-4 text-center text-xs font-medium text-white/55">
-                Biro Humas dan Protokol Setda Provinsi Sumatera Selatan
+            <footer className="relative z-10 border-t border-white/10">
+                <div className="mx-auto flex max-w-[1440px] flex-col gap-2 px-5 py-4 text-center text-[10px] font-medium uppercase tracking-[0.16em] text-white/35 sm:flex-row sm:items-center sm:justify-between sm:px-8 sm:text-left lg:px-12">
+                    <span>Pemerintah Provinsi Sumatera Selatan</span>
+                    <span>© {new Date().getFullYear()} Biro Humas dan Protokol</span>
+                </div>
             </footer>
         </div>
     );

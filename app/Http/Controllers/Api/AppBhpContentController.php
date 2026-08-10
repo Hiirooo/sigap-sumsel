@@ -48,6 +48,7 @@ class AppBhpContentController extends Controller
     {
         $query = Kliping::query()
             ->where('status', 'terpublikasi')
+            ->where('is_archived', false)
             ->when($request->string('search')->toString(), function (Builder $query, string $search) {
                 $query->where(function (Builder $query) use ($search) {
                     $query->where('judul', 'like', "%{$search}%")
@@ -64,7 +65,7 @@ class AppBhpContentController extends Controller
 
     public function klipingDetail(Kliping $kliping): JsonResponse
     {
-        abort_unless($kliping->status === 'terpublikasi', 404);
+        abort_unless($kliping->status === 'terpublikasi' && ! $kliping->is_archived, 404);
 
         return response()->json(['data' => $this->serializeKliping($kliping)]);
     }
@@ -73,9 +74,11 @@ class AppBhpContentController extends Controller
     {
         $query = Dokumentasi::query()->with('mediaItems')
             ->where('status_verifikasi', 'terverifikasi')
+            ->where('is_archived', false)
             ->when($request->string('search')->toString(), function (Builder $query, string $search) {
                 $query->where(function (Builder $query) use ($search) {
                     $query->where('judul', 'like', "%{$search}%")
+                        ->orWhere('narasi', 'like', "%{$search}%")
                         ->orWhere('pimpinan_terkait', 'like', "%{$search}%");
                 });
             })
@@ -89,7 +92,7 @@ class AppBhpContentController extends Controller
 
     public function dokumentasiDetail(Dokumentasi $dokumentasi): JsonResponse
     {
-        abort_unless($dokumentasi->status_verifikasi === 'terverifikasi', 404);
+        abort_unless($dokumentasi->status_verifikasi === 'terverifikasi' && ! $dokumentasi->is_archived, 404);
         $dokumentasi->load('mediaItems');
 
         return response()->json(['data' => $this->serializeDokumentasi($dokumentasi)]);

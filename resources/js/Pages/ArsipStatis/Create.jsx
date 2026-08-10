@@ -20,11 +20,11 @@ export default function Create() {
         <AuthenticatedLayout
             header={
                 <h2 className="text-xl font-semibold leading-tight text-white">
-                    Tambah Arsip Statis
+                    Tambah Arsip Kepegawaian
                 </h2>
             }
         >
-            <Head title="Tambah Arsip Statis" />
+            <Head title="Tambah Arsip Kepegawaian" />
 
             <div className="py-12 bg-gray-50 min-h-screen">
                 <div className="mx-auto max-w-4xl sm:px-6 lg:px-8">
@@ -32,7 +32,7 @@ export default function Create() {
                         <div className="p-6 text-gray-900">
                             <form onSubmit={submit} className="space-y-6" encType="multipart/form-data">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700">Judul Arsip</label>
+                                    <label className="block text-sm font-medium text-gray-700">Judul Arsip Kepegawaian</label>
                                     <input type="text" value={data.judul} onChange={e => setData('judul', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm" />
                                     {errors.judul && <div className="text-red-600 text-sm mt-1">{errors.judul}</div>}
                                 </div>
@@ -50,7 +50,7 @@ export default function Create() {
                                         {errors.asal_dokumen && <div className="text-red-600 text-sm mt-1">{errors.asal_dokumen}</div>}
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700">Tanggal Asli</label>
+                                        <label className="block text-sm font-medium text-gray-700">Tanggal Dokumen</label>
                                         <input type="date" value={data.tanggal_asli} onChange={e => setData('tanggal_asli', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm" />
                                         {errors.tanggal_asli && <div className="text-red-600 text-sm mt-1">{errors.tanggal_asli}</div>}
                                     </div>
@@ -58,7 +58,7 @@ export default function Create() {
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700">Jenis Asli</label>
+                                        <label className="block text-sm font-medium text-gray-700">Jenis Dokumen</label>
                                         <select value={data.jenis_asli} onChange={e => setData('jenis_asli', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm">
                                             <option value="fisik">Fisik</option>
                                             <option value="cetak">Cetak</option>

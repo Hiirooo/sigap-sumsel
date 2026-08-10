@@ -10,8 +10,12 @@ class Dokumentasi extends Model
     protected $appends = ['file_url'];
 
     protected $fillable = [
-        'judul', 'tanggal', 'jenis_media', 'file_path', 'thumbnail_path',
-        'pimpinan_terkait', 'kategori_id', 'status_verifikasi', 'status_digitalisasi'
+        'judul', 'narasi', 'tanggal', 'jenis_media', 'file_path', 'thumbnail_path',
+        'pimpinan_terkait', 'kategori_id', 'status_verifikasi', 'status_digitalisasi', 'is_archived'
+    ];
+
+    protected $casts = [
+        'is_archived' => 'boolean',
     ];
 
     public function getFileUrlAttribute(): ?string

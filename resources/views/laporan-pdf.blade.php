@@ -51,6 +51,9 @@
             background-color: #0c2d5e;
             color: white;
         }
+        @page {
+            margin: 20mm 20mm 25mm 20mm;
+        }
         .muted {
             color: #666;
             font-size: 11px;
@@ -75,17 +78,6 @@
         <p>Sistem Informasi Galeri Pimpinan (SIGAP SUMSEL)</p>
     </div>
 
-    <div class="summary-box">
-        <div class="summary-title">Laporan Rekapitulasi Data Aplikasi</div>
-        <p>Tanggal Cetak: {{ \Carbon\Carbon::now()->translatedFormat('d F Y H:i') }}</p>
-        <p class="muted">
-            Filter:
-            Jenis Dokumen {{ $filters['jenis_dokumen'] ?? 'Semua' }},
-            Kata Kunci {{ $filters['search'] ?? '-' }},
-            Periode {{ $filters['tanggal_mulai'] ?? '-' }} s.d. {{ $filters['tanggal_selesai'] ?? '-' }}
-        </p>
-    </div>
-
     <table class="stats-table">
         <thead>
             <tr>
@@ -103,7 +95,7 @@
                 <td>{{ $stats['dokumentasi'] }} Berkas</td>
             </tr>
             <tr>
-                <td>Arsip Statis & Alih Media</td>
+                <td>Arsip Kepegawaian</td>
                 <td>{{ $stats['arsip_statis'] }} Dokumen</td>
             </tr>
             <tr>
@@ -125,20 +117,20 @@
     <table class="stats-table">
         <thead>
             <tr>
-                <th>Jenis</th>
-                <th>Judul</th>
-                <th>Tanggal</th>
-                <th>Status</th>
-                <th>Sumber/Pimpinan</th>
+                <th style="width: 16%;">Jenis</th>
+                <th style="width: 34%;">Judul</th>
+                <th style="width: 14%;">Tanggal</th>
+                <th style="width: 14%;">Status</th>
+                <th style="width: 22%;">Sumber/Pimpinan</th>
             </tr>
         </thead>
         <tbody>
             @forelse ($items as $item)
                 <tr>
-                    <td>{{ $item['jenis'] }}</td>
+                    <td style="white-space: nowrap;">{{ $item['jenis'] }}</td>
                     <td>{{ $item['judul'] }}</td>
-                    <td>{{ $item['tanggal'] ?: '-' }}</td>
-                    <td>{{ $item['status'] ?: '-' }}</td>
+                    <td style="white-space: nowrap;">{{ $item['tanggal'] ?: '-' }}</td>
+                    <td style="white-space: nowrap;">{{ $item['status'] ?: '-' }}</td>
                     <td>{{ $item['sumber'] ?: '-' }}</td>
                 </tr>
             @empty
@@ -157,6 +149,29 @@
             <p><strong>( ______________________ )</strong></p>
         </div>
     </div>
+
+    <script type="text/php">
+        if (isset($pdf)) {
+            $font = $fontMetrics->getFont('Times-Roman', 'normal');
+            $size = 8;
+            $warna = [0.4, 0.4, 0.4];
+            $y = $pdf->get_height() - 14;
+            $pw = $pdf->get_width();
+
+            $kiri = "Laporan Rekapitulasi Data Aplikasi";
+            $tgl = \Carbon\Carbon::now('Asia/Jakarta')->format('d/m/Y H:i');
+            $tengah = "Tanggal Cetak: {$tgl} WIB";
+            $kanan = "Halaman {PAGE_NUM} / {PAGE_COUNT}";
+
+            $pdf->page_text(20, $y, $kiri, $font, $size, $warna);
+
+            $lebarTengah = $fontMetrics->getTextWidth($tengah, $font, $size);
+            $pdf->page_text(($pw - $lebarTengah) / 2, $y, $tengah, $font, $size, $warna);
+
+            $lebarKanan = $fontMetrics->getTextWidth('Halaman 99 / 99', $font, $size);
+            $pdf->page_text($pw - $lebarKanan - 20, $y, $kanan, $font, $size, $warna);
+        }
+    </script>
 
 </body>
 </html>

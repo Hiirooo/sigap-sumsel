@@ -1,9 +1,9 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/laravel",
+    "name": "pemprov-sumsel/sigap-sumsel",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
+    "description": "Sistem Informasi Gerak Cepat Biro Humas dan Protokol Pemerintah Provinsi Sumatera Selatan.",
+    "keywords": ["sigap", "sumsel", "pemerintah", "informasi-publik"],
     "license": "MIT",
     "require": {
         "php": "^8.3",
