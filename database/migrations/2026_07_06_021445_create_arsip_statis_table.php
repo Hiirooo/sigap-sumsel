@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('asal_dokumen')->nullable();
             $table->date('tanggal_asli')->nullable();
             $table->string('file_path');
-            $table->enum('jenis_asli', ['fisik', 'cetak', 'cd', 'lainnya'])->default('fisik');
+            $table->enum('jenis_asli', ['cuti', 'kenaikan_pangkat', 'berkala'])->default('cuti');
             $table->timestamps();
         });
     }

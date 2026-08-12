@@ -49,7 +49,7 @@ export default function Index({ arsip, filters = {} }) {
                                     type="text"
                                     value={values.search}
                                     onChange={(e) => setValues({ ...values, search: e.target.value })}
-                                    placeholder="Cari judul, deskripsi, asal dokumen"
+                                    placeholder="Cari nama, NIP, perihal, tujuan"
                                     className="rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary md:col-span-2"
                                 />
                                 <select
@@ -58,13 +58,9 @@ export default function Index({ arsip, filters = {} }) {
                                     className="rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
                                 >
                                     <option value="">Semua Jenis</option>
-                                    <option value="fisik">Fisik</option>
-                                    <option value="cetak">Cetak</option>
-                                    <option value="cd">CD</option>
-                                    <option value="lainnya">Lainnya</option>
-                                    <option value="rilis">Rilis Berita</option>
-                                    <option value="kliping">Kliping</option>
-                                    <option value="dokumentasi">Dokumentasi</option>
+                                    <option value="cuti">Cuti</option>
+                                    <option value="kenaikan_pangkat">Kenaikan Pangkat</option>
+                                    <option value="berkala">Berkala</option>
                                 </select>
                                 <input
                                     type="date"
@@ -92,34 +88,35 @@ export default function Index({ arsip, filters = {} }) {
                                 <table className="min-w-full divide-y divide-gray-200">
                                     <thead className="bg-primary text-white">
                                         <tr>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Judul / Deskripsi</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Tanggal Asli</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Asal Dokumen</th>
-                                             <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Jenis / Modul</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">No</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Tanggal Masuk</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Nama</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">NIP</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Jenis Arsip</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Perihal</th>
                                             <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Aksi</th>
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white divide-y divide-gray-200">
                                         {arsip.length === 0 ? (
                                             <tr>
-                                                <td colSpan="5" className="px-6 py-12 text-center text-gray-500 italic">
+                                                <td colSpan="7" className="px-6 py-12 text-center text-gray-500 italic">
                                                     Belum ada data arsip kepegawaian terdaftar.
                                                 </td>
                                             </tr>
                                         ) : (
-                                            arsip.map((item) => (
+                                            arsip.map((item, index) => (
                                                 <tr key={item.key} className="hover:bg-gray-50">
-                                                    <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                                                        <div>{item.judul}</div>
-                                                        <div className="mt-1 text-xs font-normal text-gray-500">{item.deskripsi || '-'}</div>
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.tanggal_asli || '-'}</td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.asal_dokumen || '-'}</td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{index + 1}</td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.tanggal_masuk || '-'}</td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.nama || '-'}</td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.nip || '-'}</td>
                                                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                                                         <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                                                            {item.jenis_asli?.toUpperCase() || '-'}
+                                                            {item.jenis_label || '-'}
                                                         </span>
                                                     </td>
+                                                    <td className="px-6 py-4 text-sm text-gray-500">{item.perihal || '-'}</td>
                                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                                         {item.file_url && <a href={item.file_url} target="_blank" rel="noopener noreferrer" className="mr-3 text-primary-light hover:text-blue-900">Buka</a>}
                                                         <Link href={item.edit_url} className="text-primary-light hover:text-blue-900 mr-3">Edit</Link>

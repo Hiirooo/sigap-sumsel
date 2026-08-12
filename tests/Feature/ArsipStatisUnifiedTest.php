@@ -19,9 +19,18 @@ class ArsipStatisUnifiedTest extends TestCase
     {
         $operator = User::factory()->create(['role' => 'operator']);
         ArsipStatis::create([
-            'judul' => 'Arsip Manual',
+            'judul' => 'Budi Santoso',
+            'deskripsi' => json_encode([
+                'kode_klasifikasi_surat' => '800.1',
+                'nomor_nota_dinas' => 'ND-001',
+                'nama' => 'Budi Santoso',
+                'nip' => '198001012010011001',
+                'perihal' => 'Permohonan cuti tahunan',
+                'tujuan' => 'Sekretaris Daerah',
+                'no_surat_cuti' => 'CUTI-001',
+            ]),
             'tanggal_asli' => '2026-07-21',
-            'jenis_asli' => 'fisik',
+            'jenis_asli' => 'cuti',
             'file_path' => 'uploads/arsip/manual.pdf',
         ]);
         RilisBerita::create([
@@ -63,13 +72,16 @@ class ArsipStatisUnifiedTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->component('ArsipStatis/Index')
                 ->has('arsip', 1)
-                ->where('arsip.0.judul', 'Arsip Manual'));
+                ->where('arsip.0.nama', 'Budi Santoso')
+                ->where('arsip.0.nip', '198001012010011001')
+                ->where('arsip.0.jenis_label', 'Cuti')
+                ->where('arsip.0.perihal', 'Permohonan cuti tahunan'));
 
         $this->actingAs($operator)
-            ->get(route('arsip-statis.index', ['jenis_asli' => 'fisik']))
+            ->get(route('arsip-statis.index', ['jenis_asli' => 'cuti']))
             ->assertInertia(fn (Assert $page) => $page
                 ->has('arsip', 1)
-                ->where('arsip.0.judul', 'Arsip Manual')
-                ->where('filters.jenis_asli', 'fisik'));
+                ->where('arsip.0.nama', 'Budi Santoso')
+                ->where('filters.jenis_asli', 'cuti'));
     }
 }

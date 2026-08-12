@@ -1,14 +1,18 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm, Link } from '@inertiajs/react';
 
-export default function Edit({ arsip }) {
+export default function Edit({ arsip, jenisOptions }) {
     const { data, setData, post, processing, errors } = useForm({
         _method: 'put',
-        judul: arsip.judul || '',
-        deskripsi: arsip.deskripsi || '',
-        asal_dokumen: arsip.asal_dokumen || '',
+        jenis_asli: arsip.jenis_asli || 'cuti',
+        kode_klasifikasi_surat: arsip.kode_klasifikasi_surat || '',
+        nomor_nota_dinas: arsip.nomor_nota_dinas || '',
         tanggal_asli: arsip.tanggal_asli || '',
-        jenis_asli: arsip.jenis_asli || 'fisik',
+        nama: arsip.nama || '',
+        nip: arsip.nip || '',
+        perihal: arsip.perihal || '',
+        tujuan: arsip.tujuan || '',
+        no_surat_cuti: arsip.no_surat_cuti || '',
         file_digital: null,
     });
 
@@ -33,46 +37,64 @@ export default function Edit({ arsip }) {
                         <div className="p-6 text-gray-900">
                             <form onSubmit={submit} className="space-y-6" encType="multipart/form-data">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700">Judul Arsip Kepegawaian</label>
-                                    <input type="text" value={data.judul} onChange={e => setData('judul', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm" />
-                                    {errors.judul && <div className="text-red-600 text-sm mt-1">{errors.judul}</div>}
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Deskripsi</label>
-                                    <textarea value={data.deskripsi} onChange={e => setData('deskripsi', e.target.value)} rows="3" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm" />
-                                    {errors.deskripsi && <div className="text-red-600 text-sm mt-1">{errors.deskripsi}</div>}
+                                    <label className="block text-sm font-medium text-gray-700">Jenis Arsip</label>
+                                    <select value={data.jenis_asli} onChange={e => setData('jenis_asli', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm">
+                                        {Object.entries(jenisOptions).map(([value, label]) => (
+                                            <option key={value} value={value}>{label}</option>
+                                        ))}
+                                    </select>
+                                    {errors.jenis_asli && <div className="text-red-600 text-sm mt-1">{errors.jenis_asli}</div>}
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700">Asal Dokumen</label>
-                                        <input type="text" value={data.asal_dokumen} onChange={e => setData('asal_dokumen', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm" />
-                                        {errors.asal_dokumen && <div className="text-red-600 text-sm mt-1">{errors.asal_dokumen}</div>}
+                                        <label className="block text-sm font-medium text-gray-700">Kode Klasifikasi Surat</label>
+                                        <input type="text" value={data.kode_klasifikasi_surat} onChange={e => setData('kode_klasifikasi_surat', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm" />
+                                        {errors.kode_klasifikasi_surat && <div className="text-red-600 text-sm mt-1">{errors.kode_klasifikasi_surat}</div>}
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700">Tanggal Dokumen</label>
+                                        <label className="block text-sm font-medium text-gray-700">Nomor Nota Dinas</label>
+                                        <input type="text" value={data.nomor_nota_dinas} onChange={e => setData('nomor_nota_dinas', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm" />
+                                        {errors.nomor_nota_dinas && <div className="text-red-600 text-sm mt-1">{errors.nomor_nota_dinas}</div>}
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Tanggal</label>
                                         <input type="date" value={data.tanggal_asli} onChange={e => setData('tanggal_asli', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm" />
                                         {errors.tanggal_asli && <div className="text-red-600 text-sm mt-1">{errors.tanggal_asli}</div>}
                                     </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Nama</label>
+                                        <input type="text" value={data.nama} onChange={e => setData('nama', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm" />
+                                        {errors.nama && <div className="text-red-600 text-sm mt-1">{errors.nama}</div>}
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">NIP</label>
+                                        <input type="text" value={data.nip} onChange={e => setData('nip', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm" />
+                                        {errors.nip && <div className="text-red-600 text-sm mt-1">{errors.nip}</div>}
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Perihal</label>
+                                        <input type="text" value={data.perihal} onChange={e => setData('perihal', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm" />
+                                        {errors.perihal && <div className="text-red-600 text-sm mt-1">{errors.perihal}</div>}
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Tujuan</label>
+                                        <input type="text" value={data.tujuan} onChange={e => setData('tujuan', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm" />
+                                        {errors.tujuan && <div className="text-red-600 text-sm mt-1">{errors.tujuan}</div>}
+                                    </div>
+                                    {data.jenis_asli === 'cuti' && (
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700">No. Surat Cuti</label>
+                                            <input type="text" value={data.no_surat_cuti} onChange={e => setData('no_surat_cuti', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm" />
+                                            {errors.no_surat_cuti && <div className="text-red-600 text-sm mt-1">{errors.no_surat_cuti}</div>}
+                                        </div>
+                                    )}
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700">Jenis Dokumen</label>
-                                        <select value={data.jenis_asli} onChange={e => setData('jenis_asli', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm">
-                                            <option value="fisik">Fisik</option>
-                                            <option value="cetak">Cetak</option>
-                                            <option value="cd">CD</option>
-                                            <option value="lainnya">Lainnya</option>
-                                        </select>
-                                        {errors.jenis_asli && <div className="text-red-600 text-sm mt-1">{errors.jenis_asli}</div>}
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700">Ganti File (Kosongkan jika tidak diganti)</label>
-                                        <input type="file" onChange={e => setData('file_digital', e.target.files[0])} className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-white hover:file:bg-red-700" />
-                                        {errors.file_digital && <div className="text-red-600 text-sm mt-1">{errors.file_digital}</div>}
-                                    </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Ganti File (Kosongkan jika tidak diganti)</label>
+                                    <input type="file" onChange={e => setData('file_digital', e.target.files[0])} className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-white hover:file:bg-red-700" />
+                                    {errors.file_digital && <div className="text-red-600 text-sm mt-1">{errors.file_digital}</div>}
                                 </div>
 
                                 <div className="flex items-center justify-end mt-4">
