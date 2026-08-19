@@ -1,0 +1,1 @@
+import{t as e}from"./app-BOPlN1qb.js";var t=e();function n({logoSrc:e,...n}){return(0,t.jsx)(`img`,{...n,src:e??`/logo-bhp.jpg`,alt:`Logo Biro Humas dan Protokol`})}export{n as t};
