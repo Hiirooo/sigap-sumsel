@@ -20,7 +20,19 @@ export default function Create({ jenisOptions }) {
 
     const submit = (e) => {
         e.preventDefault();
-        post(route('arsip-statis.store'));
+        post(route('arsip-statis.store'), {
+            onError: (err) => console.error('VALIDATION ERRORS:', err),
+        });
+    };
+
+    const toggleKolektif = (checked) => {
+        setData('kolektif', checked);
+        if (checked && data.anggota.length < 2) {
+            setData('anggota', [
+                ...data.anggota,
+                ...Array.from({ length: 2 - data.anggota.length }, () => ({ nama: '', nip: '' })),
+            ]);
+        }
     };
 
     const updateAnggota = (index, field, value) => {
@@ -112,7 +124,7 @@ export default function Create({ jenisOptions }) {
                                         <input
                                             type="checkbox"
                                             checked={data.kolektif}
-                                            onChange={e => setData('kolektif', e.target.checked)}
+                                            onChange={e => toggleKolektif(e.target.checked)}
                                             className="rounded border-gray-300 text-primary focus:ring-primary"
                                         />
                                         Kolektif (satu nota dinas untuk banyak orang)
@@ -142,7 +154,7 @@ export default function Create({ jenisOptions }) {
                                                         <button
                                                             type="button"
                                                             onClick={() => removeAnggota(index)}
-                                                            disabled={data.anggota.length <= 1}
+                                                            disabled={data.kolektif ? data.anggota.length <= 2 : data.anggota.length <= 1}
                                                             className="text-sm font-medium text-red-600 hover:text-red-800 disabled:cursor-not-allowed disabled:text-gray-400"
                                                         >
                                                             Hapus

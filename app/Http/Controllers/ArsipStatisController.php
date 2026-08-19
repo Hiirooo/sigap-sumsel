@@ -204,7 +204,7 @@ class ArsipStatisController extends Controller
             'kolektif' => 'sometimes|boolean',
             'nama' => 'required_unless:kolektif,true|string|max:255',
             'nip' => 'required_unless:kolektif,true|string|max:255',
-            'anggota' => 'required_if:kolektif,true|array|min:1',
+            'anggota' => 'required_if:kolektif,true|array|min:2',
             'anggota.*.nama' => 'required|string|max:255',
             'anggota.*.nip' => 'nullable|string|max:255',
             'perihal' => 'required|string|max:255',
