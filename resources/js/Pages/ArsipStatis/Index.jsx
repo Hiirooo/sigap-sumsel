@@ -101,7 +101,8 @@ export default function Index({ arsip, filters = {} }) {
                                     <thead className="bg-primary text-white">
                                         <tr>
                                             <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">No</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Tanggal Masuk</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Tanggal Input</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Tanggal Arsip</th>
                                             <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Nama</th>
                                             <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">NIP</th>
                                             <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Jenis Arsip</th>
@@ -112,7 +113,7 @@ export default function Index({ arsip, filters = {} }) {
                                     <tbody className="bg-white divide-y divide-gray-200">
                                         {arsip.length === 0 ? (
                                             <tr>
-                                                <td colSpan="7" className="px-6 py-12 text-center text-gray-500 italic">
+                                                <td colSpan="8" className="px-6 py-12 text-center text-gray-500 italic">
                                                     Belum ada data arsip kepegawaian terdaftar.
                                                 </td>
                                             </tr>
@@ -121,6 +122,7 @@ export default function Index({ arsip, filters = {} }) {
                                                 <tr key={item.key} className="hover:bg-gray-50">
                                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{index + 1}</td>
                                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.tanggal_masuk || '-'}</td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.tanggal_asli || '-'}</td>
                                                     <td className="px-6 py-4 text-sm font-medium text-gray-900">{item.nama || '-'}</td>
                                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.nip || '-'}</td>
                                                     <td className="px-6 py-4 whitespace-nowrap text-sm">
