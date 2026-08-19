@@ -8,6 +8,8 @@ use Inertia\Inertia;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 
 class ArsipStatisController extends Controller
 {
@@ -89,7 +91,19 @@ class ArsipStatisController extends Controller
             'is_inertia' => $request->header('X-Inertia'),
         ]);
 
-        $validated = $request->validate($this->rules(true, $request));
+        $validator = Validator::make($request->all(), $this->rules(true, $request));
+
+        if ($validator->fails()) {
+            Log::error('ArsipStatis validation failed', [
+                'errors' => $validator->errors()->toArray(),
+                'input' => $request->except(['file_digital']),
+                'kolektif_value' => $request->input('kolektif'),
+                'kolektif_type' => gettype($request->input('kolektif')),
+            ]);
+            throw ValidationException::withMessages($validator->errors()->toArray());
+        }
+
+        $validated = $validator->validated();
 
         try {
             $anggota = $this->collectAnggota($validated);
@@ -207,7 +221,7 @@ class ArsipStatisController extends Controller
             'nama' => 'required_unless:kolektif,true|string|max:255',
             'nip' => 'required_unless:kolektif,true|nullable|string|max:255',
             'anggota' => $kolektif ? 'required|array|min:2' : 'sometimes|array',
-            'anggota.*.nama' => 'required|string|max:255',
+            'anggota.*.nama' => $kolektif ? 'required|string|max:255' : 'nullable|string|max:255',
             'anggota.*.nip' => 'nullable|string|max:255',
             'perihal' => 'required|string|max:255',
             'tujuan' => 'required|string|max:255',
