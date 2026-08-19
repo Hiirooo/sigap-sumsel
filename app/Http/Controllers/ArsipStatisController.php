@@ -91,6 +91,9 @@ class ArsipStatisController extends Controller
             'is_inertia' => $request->header('X-Inertia'),
         ]);
 
+        $kolektifRaw = $request->input('kolektif');
+        $request->merge(['kolektif' => in_array($kolektifRaw, [true, 'true', '1', 1], true) ? '1' : '0']);
+
         $validator = Validator::make($request->all(), $this->rules(true, $request));
 
         if ($validator->fails()) {
@@ -153,6 +156,9 @@ class ArsipStatisController extends Controller
     public function update(Request $request, $id)
     {
         $arsip = ArsipStatis::findOrFail($id);
+
+        $kolektifRaw = $request->input('kolektif');
+        $request->merge(['kolektif' => in_array($kolektifRaw, [true, 'true', '1', 1], true) ? '1' : '0']);
 
         $validated = $request->validate($this->rules(false, $request));
 
@@ -217,9 +223,9 @@ class ArsipStatisController extends Controller
             'kode_klasifikasi_surat' => 'required|string|max:255',
             'nomor_nota_dinas' => 'required|string|max:255',
             'tanggal_asli' => 'required|date',
-            'kolektif' => 'sometimes|in:0,1,true,false,True,False',
-            'nama' => 'required_unless:kolektif,1,true|string|max:255',
-            'nip' => 'required_unless:kolektif,1,true|nullable|string|max:255',
+            'kolektif' => 'sometimes|in:0,1',
+            'nama' => 'required_unless:kolektif,1|string|max:255',
+            'nip' => 'required_unless:kolektif,1|nullable|string|max:255',
             'anggota' => $kolektif ? 'required|array|min:2' : 'sometimes|array',
             'anggota.*.nama' => $kolektif ? 'required|string|max:255' : 'nullable|string|max:255',
             'anggota.*.nip' => 'nullable|string|max:255',
