@@ -224,7 +224,7 @@ class ArsipStatisController extends Controller
             'nomor_nota_dinas' => 'required|string|max:255',
             'tanggal_asli' => 'required|date',
             'kolektif' => 'sometimes|in:0,1',
-            'nama' => 'required_unless:kolektif,1|string|max:255',
+            'nama' => 'required_unless:kolektif,1|nullable|string|max:255',
             'nip' => 'required_unless:kolektif,1|nullable|string|max:255',
             'anggota' => $kolektif ? 'required|array|min:2' : 'sometimes|array',
             'anggota.*.nama' => $kolektif ? 'required|string|max:255' : 'nullable|string|max:255',
