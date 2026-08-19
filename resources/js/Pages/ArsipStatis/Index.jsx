@@ -1,8 +1,9 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
 export default function Index({ arsip, filters = {} }) {
+    const flash = usePage().props.flash || {};
     const [values, setValues] = useState({
         search: filters.search || '',
         jenis_asli: filters.jenis_asli || '',
@@ -37,6 +38,17 @@ export default function Index({ arsip, filters = {} }) {
                 <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
                     <div className="bg-white overflow-hidden shadow-lg sm:rounded-xl border-t-4 border-primary">
                         <div className="p-6 text-gray-900">
+                            {flash.success && (
+                                <div className="mb-6 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800">
+                                    {flash.success}
+                                </div>
+                            )}
+                            {flash.error && (
+                                <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-800">
+                                    {flash.error}
+                                </div>
+                            )}
+
                             <div className="flex justify-between items-center mb-6">
                                 <h3 className="text-2xl font-bold text-primary">Daftar Arsip Kepegawaian</h3>
                                 <Link href={route('arsip-statis.create')} className="bg-primary hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-all duration-300">

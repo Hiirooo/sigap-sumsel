@@ -1,7 +1,8 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, useForm, Link } from '@inertiajs/react';
+import { Head, useForm, Link, usePage } from '@inertiajs/react';
 
 export default function Create({ jenisOptions }) {
+    const flash = usePage().props.flash || {};
     const { data, setData, post, processing, errors } = useForm({
         jenis_asli: 'cuti',
         kode_klasifikasi_surat: '',
@@ -49,6 +50,17 @@ export default function Create({ jenisOptions }) {
                 <div className="mx-auto max-w-4xl sm:px-6 lg:px-8">
                     <div className="bg-white overflow-hidden shadow-lg sm:rounded-xl border-t-4 border-primary">
                         <div className="p-6 text-gray-900">
+                            {flash.error && (
+                                <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-800">
+                                    {flash.error}
+                                </div>
+                            )}
+                            {Object.keys(errors).length > 0 && (
+                                <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-800">
+                                    Data gagal disimpan. Periksa kembali isian yang ditandai merah.
+                                </div>
+                            )}
+
                             <form onSubmit={submit} className="space-y-6" encType="multipart/form-data">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700">Jenis Arsip</label>
@@ -182,7 +194,7 @@ export default function Create({ jenisOptions }) {
                                         Batal
                                     </Link>
                                     <button disabled={processing} type="submit" className="bg-primary hover:bg-red-800 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-all duration-300">
-                                        Simpan Arsip
+                                        {processing ? 'Menyimpan...' : 'Simpan Arsip'}
                                     </button>
                                 </div>
                             </form>

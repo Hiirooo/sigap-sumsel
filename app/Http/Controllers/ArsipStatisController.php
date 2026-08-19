@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class ArsipStatisController extends Controller
 {
@@ -80,19 +81,36 @@ class ArsipStatisController extends Controller
 
     public function store(Request $request)
     {
+        Log::info('ArsipStatis store called', [
+            'method' => $request->method(),
+            'url' => $request->url(),
+            'has_file' => $request->hasFile('file_digital'),
+            'all_keys' => array_keys($request->except(['_token', '_method'])),
+            'is_inertia' => $request->header('X-Inertia'),
+        ]);
+
         $validated = $request->validate($this->rules(true));
 
-        $anggota = $this->collectAnggota($validated);
-        $data = $this->formatArchiveData($validated, $anggota);
+        try {
+            $anggota = $this->collectAnggota($validated);
+            $data = $this->formatArchiveData($validated, $anggota);
 
-        if ($request->hasFile('file_digital')) {
-            $data['file_path'] = $request->file('file_digital')->store('uploads/arsip');
+            if ($request->hasFile('file_digital')) {
+                $data['file_path'] = $request->file('file_digital')->store('uploads/arsip');
+            }
+
+            $arsip = ArsipStatis::create($data);
+            $arsip->anggota()->createMany($anggota);
+        } catch (\Throwable $e) {
+            Log::error('ARsipStatis store failed: '.$e->getMessage(), [
+                'exception' => $e,
+                'validated' => $validated ?? null,
+                'has_file' => $request->hasFile('file_digital'),
+            ]);
+            return redirect()->back()->with('error', 'Gagal menyimpan arsip. Silakan periksa kembali data Anda.');
         }
 
-        $arsip = ArsipStatis::create($data);
-        $arsip->anggota()->createMany($anggota);
-
-        return redirect()->route('arsip-statis.index')->with('message', 'Arsip Kepegawaian berhasil ditambahkan.');
+        return redirect()->route('arsip-statis.index')->with('success', 'Arsip Kepegawaian berhasil ditambahkan.');
     }
 
     public function edit($id)
@@ -124,34 +142,42 @@ class ArsipStatisController extends Controller
 
         $validated = $request->validate($this->rules(false));
 
-        $anggota = $this->collectAnggota($validated);
-        $data = $this->formatArchiveData($validated, $anggota);
+        try {
+            $anggota = $this->collectAnggota($validated);
+            $data = $this->formatArchiveData($validated, $anggota);
 
-        if ($request->hasFile('file_digital')) {
-            if ($arsip->file_path) {
-                $this->deleteStoredFile($arsip->file_path);
+            if ($request->hasFile('file_digital')) {
+                if ($arsip->file_path) {
+                    $this->deleteStoredFile($arsip->file_path);
+                }
+                $data['file_path'] = $request->file('file_digital')->store('uploads/arsip');
             }
-            $data['file_path'] = $request->file('file_digital')->store('uploads/arsip');
+
+            $arsip->update($data);
+            $arsip->anggota()->delete();
+            $arsip->anggota()->createMany($anggota);
+        } catch (\Throwable $e) {
+            return redirect()->back()->with('error', 'Gagal memperbarui arsip. Silakan periksa kembali data Anda.');
         }
 
-        $arsip->update($data);
-        $arsip->anggota()->delete();
-        $arsip->anggota()->createMany($anggota);
-
-        return redirect()->route('arsip-statis.index')->with('message', 'Arsip Kepegawaian berhasil diperbarui.');
+        return redirect()->route('arsip-statis.index')->with('success', 'Arsip Kepegawaian berhasil diperbarui.');
     }
 
     public function destroy($id)
     {
-        $arsip = ArsipStatis::findOrFail($id);
-        
-        if ($arsip->file_path) {
-            $this->deleteStoredFile($arsip->file_path);
-        }
-        
-        $arsip->delete();
+        try {
+            $arsip = ArsipStatis::findOrFail($id);
 
-        return redirect()->route('arsip-statis.index')->with('message', 'Arsip Kepegawaian berhasil dihapus.');
+            if ($arsip->file_path) {
+                $this->deleteStoredFile($arsip->file_path);
+            }
+
+            $arsip->delete();
+        } catch (\Throwable $e) {
+            return redirect()->back()->with('error', 'Gagal menghapus arsip. Silakan coba lagi.');
+        }
+
+        return redirect()->route('arsip-statis.index')->with('success', 'Arsip Kepegawaian berhasil dihapus.');
     }
 
     private function deleteStoredFile(string $path): void
