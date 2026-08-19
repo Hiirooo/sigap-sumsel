@@ -203,7 +203,7 @@ class ArsipStatisController extends Controller
             'kode_klasifikasi_surat' => 'required|string|max:255',
             'nomor_nota_dinas' => 'required|string|max:255',
             'tanggal_asli' => 'required|date',
-            'kolektif' => 'sometimes|boolean',
+            'kolektif' => 'sometimes|in:0,1,true,false,True,False',
             'nama' => 'required_unless:kolektif,true|string|max:255',
             'nip' => 'required_unless:kolektif,true|nullable|string|max:255',
             'anggota' => $kolektif ? 'required|array|min:2' : 'sometimes|array',
