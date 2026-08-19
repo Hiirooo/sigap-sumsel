@@ -2,14 +2,20 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm, Link } from '@inertiajs/react';
 
 export default function Edit({ arsip, jenisOptions }) {
+    const initialAnggota = Array.isArray(arsip.anggota) && arsip.anggota.length
+        ? arsip.anggota.map((item) => ({ nama: item.nama || '', nip: item.nip || '' }))
+        : [{ nama: arsip.nama || '', nip: arsip.nip || '' }];
+
     const { data, setData, post, processing, errors } = useForm({
         _method: 'put',
         jenis_asli: arsip.jenis_asli || 'cuti',
         kode_klasifikasi_surat: arsip.kode_klasifikasi_surat || '',
         nomor_nota_dinas: arsip.nomor_nota_dinas || '',
         tanggal_asli: arsip.tanggal_asli || '',
+        kolektif: Boolean(arsip.kolektif),
         nama: arsip.nama || '',
         nip: arsip.nip || '',
+        anggota: initialAnggota,
         perihal: arsip.perihal || '',
         tujuan: arsip.tujuan || '',
         no_surat_cuti: arsip.no_surat_cuti || '',
@@ -19,6 +25,19 @@ export default function Edit({ arsip, jenisOptions }) {
     const submit = (e) => {
         e.preventDefault();
         post(route('arsip-statis.update', arsip.id));
+    };
+
+    const updateAnggota = (index, field, value) => {
+        const next = data.anggota.map((item, i) => (i === index ? { ...item, [field]: value } : item));
+        setData('anggota', next);
+    };
+
+    const addAnggota = () => {
+        setData('anggota', [...data.anggota, { nama: '', nip: '' }]);
+    };
+
+    const removeAnggota = (index) => {
+        setData('anggota', data.anggota.filter((_, i) => i !== index));
     };
 
     return (
@@ -63,16 +82,6 @@ export default function Edit({ arsip, jenisOptions }) {
                                         {errors.tanggal_asli && <div className="text-red-600 text-sm mt-1">{errors.tanggal_asli}</div>}
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700">Nama</label>
-                                        <input type="text" value={data.nama} onChange={e => setData('nama', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm" />
-                                        {errors.nama && <div className="text-red-600 text-sm mt-1">{errors.nama}</div>}
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700">NIP</label>
-                                        <input type="text" value={data.nip} onChange={e => setData('nip', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm" />
-                                        {errors.nip && <div className="text-red-600 text-sm mt-1">{errors.nip}</div>}
-                                    </div>
-                                    <div>
                                         <label className="block text-sm font-medium text-gray-700">Perihal</label>
                                         <input type="text" value={data.perihal} onChange={e => setData('perihal', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm" />
                                         {errors.perihal && <div className="text-red-600 text-sm mt-1">{errors.perihal}</div>}
@@ -87,6 +96,82 @@ export default function Edit({ arsip, jenisOptions }) {
                                             <label className="block text-sm font-medium text-gray-700">No. Surat Cuti</label>
                                             <input type="text" value={data.no_surat_cuti} onChange={e => setData('no_surat_cuti', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm" />
                                             {errors.no_surat_cuti && <div className="text-red-600 text-sm mt-1">{errors.no_surat_cuti}</div>}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="rounded-lg border border-gray-200 p-4">
+                                    <label className="flex items-center gap-3 text-sm font-medium text-gray-700">
+                                        <input
+                                            type="checkbox"
+                                            checked={data.kolektif}
+                                            onChange={e => setData('kolektif', e.target.checked)}
+                                            className="rounded border-gray-300 text-primary focus:ring-primary"
+                                        />
+                                        Kolektif (satu nota dinas untuk banyak orang)
+                                    </label>
+                                    {errors.kolektif && <div className="text-red-600 text-sm mt-1">{errors.kolektif}</div>}
+
+                                    {!data.kolektif ? (
+                                        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700">Nama</label>
+                                                <input type="text" value={data.nama} onChange={e => setData('nama', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm" />
+                                                {errors.nama && <div className="text-red-600 text-sm mt-1">{errors.nama}</div>}
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700">NIP</label>
+                                                <input type="text" value={data.nip} onChange={e => setData('nip', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm" />
+                                                {errors.nip && <div className="text-red-600 text-sm mt-1">{errors.nip}</div>}
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="mt-4 space-y-4">
+                                            {errors.anggota && <div className="text-red-600 text-sm">{errors.anggota}</div>}
+                                            {data.anggota.map((anggota, index) => (
+                                                <div key={index} className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                                                    <div className="mb-3 flex items-center justify-between">
+                                                        <span className="text-sm font-semibold text-gray-700">Pegawai {index + 1}</span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => removeAnggota(index)}
+                                                            disabled={data.anggota.length <= 1}
+                                                            className="text-sm font-medium text-red-600 hover:text-red-800 disabled:cursor-not-allowed disabled:text-gray-400"
+                                                        >
+                                                            Hapus
+                                                        </button>
+                                                    </div>
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                        <div>
+                                                            <label className="block text-sm font-medium text-gray-700">Nama</label>
+                                                            <input
+                                                                type="text"
+                                                                value={anggota.nama}
+                                                                onChange={e => updateAnggota(index, 'nama', e.target.value)}
+                                                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+                                                            />
+                                                            {errors[`anggota.${index}.nama`] && <div className="text-red-600 text-sm mt-1">{errors[`anggota.${index}.nama`]}</div>}
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-sm font-medium text-gray-700">NIP</label>
+                                                            <input
+                                                                type="text"
+                                                                value={anggota.nip}
+                                                                onChange={e => updateAnggota(index, 'nip', e.target.value)}
+                                                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+                                                            />
+                                                            {errors[`anggota.${index}.nip`] && <div className="text-red-600 text-sm mt-1">{errors[`anggota.${index}.nip`]}</div>}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                            <button
+                                                type="button"
+                                                onClick={addAnggota}
+                                                className="rounded-md border border-primary px-3 py-2 text-sm font-semibold text-primary hover:bg-primary hover:text-white"
+                                            >
+                                                + Tambah Pegawai
+                                            </button>
                                         </div>
                                     )}
                                 </div>

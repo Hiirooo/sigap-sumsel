@@ -19,11 +19,16 @@ class ArsipStatisController extends Controller
         $from = $filters['tanggal_mulai'] ?? null;
         $until = $filters['tanggal_selesai'] ?? null;
         $arsip = ArsipStatis::query()
+            ->with('anggota')
             ->when($search, function ($query, $search) {
                 $query->where(function ($query) use ($search) {
                     $query->where('judul', 'like', "%{$search}%")
                         ->orWhere('deskripsi', 'like', "%{$search}%")
-                        ->orWhere('asal_dokumen', 'like', "%{$search}%");
+                        ->orWhere('asal_dokumen', 'like', "%{$search}%")
+                        ->orWhereHas('anggota', function ($query) use ($search) {
+                            $query->where('nama', 'like', "%{$search}%")
+                                ->orWhere('nip', 'like', "%{$search}%");
+                        });
                 });
             })
             ->when($type, fn ($query, $type) => $query->where('jenis_asli', $type))
@@ -32,14 +37,18 @@ class ArsipStatisController extends Controller
             ->get()
             ->map(function (ArsipStatis $item) {
                 $detail = $this->decodeDetail($item->deskripsi);
+                $anggota = $this->resolveAnggota($item, $detail);
+                $kolektif = (bool) $item->is_kolektif || count($anggota) > 1;
 
                 return [
                     'key' => 'arsip-kepegawaian-'.$item->id,
                     'id' => $item->id,
                     'tanggal_masuk' => $item->created_at?->toDateString(),
                     'tanggal_asli' => $item->tanggal_asli,
-                    'nama' => $detail['nama'] ?? $item->judul,
-                    'nip' => $detail['nip'] ?? null,
+                    'nama' => implode(', ', array_column($anggota, 'nama')),
+                    'nip' => implode(', ', array_filter(array_column($anggota, 'nip'))),
+                    'anggota' => $anggota,
+                    'kolektif' => $kolektif,
                     'perihal' => $detail['perihal'] ?? null,
                     'jenis_asli' => $item->jenis_asli,
                     'jenis_label' => $this->archiveTypes()[$item->jenis_asli] ?? $item->jenis_asli,
@@ -73,27 +82,37 @@ class ArsipStatisController extends Controller
     {
         $validated = $request->validate($this->rules(true));
 
-        $validated = $this->formatArchiveData($validated);
+        $anggota = $this->collectAnggota($validated);
+        $data = $this->formatArchiveData($validated, $anggota);
 
         if ($request->hasFile('file_digital')) {
-            $validated['file_path'] = $request->file('file_digital')->store('uploads/arsip');
+            $data['file_path'] = $request->file('file_digital')->store('uploads/arsip');
         }
 
-        ArsipStatis::create($validated);
+        $arsip = ArsipStatis::create($data);
+        $arsip->anggota()->createMany($anggota);
 
         return redirect()->route('arsip-statis.index')->with('message', 'Arsip Kepegawaian berhasil ditambahkan.');
     }
 
     public function edit($id)
     {
-        $arsip = ArsipStatis::findOrFail($id);
+        $arsip = ArsipStatis::with('anggota')->findOrFail($id);
+
+        $detail = $this->decodeDetail($arsip->deskripsi);
+        $anggota = $this->resolveAnggota($arsip, $detail);
+
         return Inertia::render('ArsipStatis/Edit', [
             'arsip' => [
                 'id' => $arsip->id,
                 'jenis_asli' => $arsip->jenis_asli,
                 'tanggal_asli' => $arsip->tanggal_asli,
+                'kolektif' => (bool) $arsip->is_kolektif || count($anggota) > 1,
+                'anggota' => $anggota,
+                'nama' => $anggota[0]['nama'] ?? '',
+                'nip' => $anggota[0]['nip'] ?? '',
                 'file_url' => $arsip->file_url,
-                ...$this->decodeDetail($arsip->deskripsi),
+                ...$detail,
             ],
             'jenisOptions' => $this->archiveTypes(),
         ]);
@@ -105,16 +124,19 @@ class ArsipStatisController extends Controller
 
         $validated = $request->validate($this->rules(false));
 
-        $validated = $this->formatArchiveData($validated);
+        $anggota = $this->collectAnggota($validated);
+        $data = $this->formatArchiveData($validated, $anggota);
 
         if ($request->hasFile('file_digital')) {
             if ($arsip->file_path) {
                 $this->deleteStoredFile($arsip->file_path);
             }
-            $validated['file_path'] = $request->file('file_digital')->store('uploads/arsip');
+            $data['file_path'] = $request->file('file_digital')->store('uploads/arsip');
         }
 
-        $arsip->update($validated);
+        $arsip->update($data);
+        $arsip->anggota()->delete();
+        $arsip->anggota()->createMany($anggota);
 
         return redirect()->route('arsip-statis.index')->with('message', 'Arsip Kepegawaian berhasil diperbarui.');
     }
@@ -153,8 +175,12 @@ class ArsipStatisController extends Controller
             'kode_klasifikasi_surat' => 'required|string|max:255',
             'nomor_nota_dinas' => 'required|string|max:255',
             'tanggal_asli' => 'required|date',
-            'nama' => 'required|string|max:255',
-            'nip' => 'required|string|max:255',
+            'kolektif' => 'sometimes|boolean',
+            'nama' => 'required_unless:kolektif,true|string|max:255',
+            'nip' => 'required_unless:kolektif,true|string|max:255',
+            'anggota' => 'required_if:kolektif,true|array|min:1',
+            'anggota.*.nama' => 'required|string|max:255',
+            'anggota.*.nip' => 'nullable|string|max:255',
             'perihal' => 'required|string|max:255',
             'tujuan' => 'required|string|max:255',
             'no_surat_cuti' => 'required_if:jenis_asli,cuti|nullable|string|max:255',
@@ -162,24 +188,51 @@ class ArsipStatisController extends Controller
         ];
     }
 
-    private function formatArchiveData(array $validated): array
+    private function collectAnggota(array $validated): array
+    {
+        $kolektif = filter_var($validated['kolektif'] ?? false, FILTER_VALIDATE_BOOLEAN);
+
+        $anggota = $kolektif
+            ? ($validated['anggota'] ?? [])
+            : [['nama' => $validated['nama'], 'nip' => $validated['nip'] ?? null]];
+
+        return array_values(array_map(fn (array $item) => [
+            'nama' => $item['nama'],
+            'nip' => $item['nip'] ?? null,
+        ], $anggota));
+    }
+
+    private function resolveAnggota(ArsipStatis $arsip, array $detail): array
+    {
+        $anggota = $arsip->anggota
+            ->map(fn ($a) => ['nama' => $a->nama, 'nip' => $a->nip])
+            ->values()
+            ->all();
+
+        if (empty($anggota)) {
+            $anggota = [['nama' => $detail['nama'] ?? $arsip->judul, 'nip' => $detail['nip'] ?? null]];
+        }
+
+        return $anggota;
+    }
+
+    private function formatArchiveData(array $validated, array $anggota): array
     {
         $detail = [
             'kode_klasifikasi_surat' => $validated['kode_klasifikasi_surat'],
             'nomor_nota_dinas' => $validated['nomor_nota_dinas'],
-            'nama' => $validated['nama'],
-            'nip' => $validated['nip'],
             'perihal' => $validated['perihal'],
             'tujuan' => $validated['tujuan'],
             'no_surat_cuti' => $validated['no_surat_cuti'] ?? null,
         ];
 
         return [
-            'judul' => $validated['nama'],
+            'judul' => $anggota[0]['nama'] ?? $validated['nama'] ?? 'Kolektif',
             'deskripsi' => json_encode($detail),
             'asal_dokumen' => $validated['tujuan'],
             'tanggal_asli' => $validated['tanggal_asli'],
             'jenis_asli' => $validated['jenis_asli'],
+            'is_kolektif' => count($anggota) > 1,
         ];
     }
 

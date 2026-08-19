@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ArsipStatis extends Model
 {
@@ -10,8 +11,13 @@ class ArsipStatis extends Model
 
     protected $fillable = [
         'judul', 'deskripsi', 'asal_dokumen',
-        'tanggal_asli', 'file_path', 'jenis_asli'
+        'tanggal_asli', 'file_path', 'jenis_asli', 'is_kolektif'
     ];
+
+    public function anggota(): HasMany
+    {
+        return $this->hasMany(ArsipStatisAnggota::class);
+    }
 
     public function getFileUrlAttribute(): ?string
     {

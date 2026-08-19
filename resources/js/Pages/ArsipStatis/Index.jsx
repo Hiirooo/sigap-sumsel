@@ -109,7 +109,14 @@ export default function Index({ arsip, filters = {} }) {
                                                 <tr key={item.key} className="hover:bg-gray-50">
                                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{index + 1}</td>
                                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.tanggal_masuk || '-'}</td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.nama || '-'}</td>
+<td className="px-6 py-4 text-sm font-medium text-gray-900">
+                                                        <div>{item.nama || '-'}</div>
+                                                        {item.kolektif && (
+                                                            <span className="mt-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-amber-100 text-amber-800">
+                                                                Kolektif ({item.anggota?.length || 2} pegawai)
+                                                            </span>
+                                                        )}
+                                                    </td>
                                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.nip || '-'}</td>
                                                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                                                         <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
