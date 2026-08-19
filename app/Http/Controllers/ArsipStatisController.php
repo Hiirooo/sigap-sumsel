@@ -89,7 +89,7 @@ class ArsipStatisController extends Controller
             'is_inertia' => $request->header('X-Inertia'),
         ]);
 
-        $validated = $request->validate($this->rules(true));
+        $validated = $request->validate($this->rules(true, $request));
 
         try {
             $anggota = $this->collectAnggota($validated);
@@ -140,7 +140,7 @@ class ArsipStatisController extends Controller
     {
         $arsip = ArsipStatis::findOrFail($id);
 
-        $validated = $request->validate($this->rules(false));
+        $validated = $request->validate($this->rules(false, $request));
 
         try {
             $anggota = $this->collectAnggota($validated);
@@ -194,8 +194,10 @@ class ArsipStatisController extends Controller
         }
     }
 
-    private function rules(bool $fileRequired): array
+    private function rules(bool $fileRequired, Request $request): array
     {
+        $kolektif = filter_var($request->input('kolektif', false), FILTER_VALIDATE_BOOLEAN);
+
         return [
             'jenis_asli' => ['required', Rule::in(array_keys($this->archiveTypes()))],
             'kode_klasifikasi_surat' => 'required|string|max:255',
@@ -203,8 +205,8 @@ class ArsipStatisController extends Controller
             'tanggal_asli' => 'required|date',
             'kolektif' => 'sometimes|boolean',
             'nama' => 'required_unless:kolektif,true|string|max:255',
-            'nip' => 'required_unless:kolektif,true|string|max:255',
-            'anggota' => 'required_if:kolektif,true|array|min:2',
+            'nip' => 'required_unless:kolektif,true|nullable|string|max:255',
+            'anggota' => $kolektif ? 'required|array|min:2' : 'sometimes|array',
             'anggota.*.nama' => 'required|string|max:255',
             'anggota.*.nip' => 'nullable|string|max:255',
             'perihal' => 'required|string|max:255',
