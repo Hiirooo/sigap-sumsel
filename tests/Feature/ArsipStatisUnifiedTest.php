@@ -146,13 +146,18 @@ class ArsipStatisUnifiedTest extends TestCase
                 ->component('ArsipStatis/Index')
                 ->has('arsip', 1)
                 ->where('arsip.0.kolektif', true)
-                ->where('arsip.0.nama', 'Andi Wijaya, Budi Santoso')
-                ->where('arsip.0.nip', '198001012010011001, 198202022011022001'));
+                ->where('arsip.0.nama', 'Budi Santoso')
+                ->where('arsip.0.nip', '198202022011022001'));
 
         $this->actingAs($operator)
             ->get(route('arsip-statis.index', ['search' => '198202022011022001']))
             ->assertInertia(fn (Assert $page) => $page
                 ->has('arsip', 1)
-                ->where('arsip.0.nama', 'Andi Wijaya, Budi Santoso'));
+                ->where('arsip.0.nama', 'Budi Santoso'));
+
+        $this->actingAs($operator)
+            ->get(route('arsip-statis.index'))
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('arsip', 2));
     }
 }

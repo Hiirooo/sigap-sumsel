@@ -38,35 +38,47 @@ class ArsipStatisController extends Controller
             ->when($from, fn ($query, $date) => $query->whereDate('tanggal_asli', '>=', $date))
             ->when($until, fn ($query, $date) => $query->whereDate('tanggal_asli', '<=', $date))
             ->get()
-            ->map(function (ArsipStatis $item) {
+            ->flatMap(function (ArsipStatis $item) use ($search) {
                 $detail = $this->decodeDetail($item->deskripsi);
                 $anggota = $this->resolveAnggota($item, $detail);
                 $kolektif = (bool) $item->is_kolektif || count($anggota) > 1;
 
-                return [
-                    'key' => 'arsip-kepegawaian-'.$item->id,
-                    'id' => $item->id,
-                    'tanggal_masuk' => $item->created_at?->toDateString(),
-                    'tanggal_asli' => $item->tanggal_asli,
-                    'nama' => implode(', ', array_column($anggota, 'nama')),
-                    'nip' => implode(', ', array_filter(array_column($anggota, 'nip'))),
-                    'anggota' => $anggota,
-                    'kolektif' => $kolektif,
-                    'perihal' => $detail['perihal'] ?? null,
-                    'jenis_asli' => $item->jenis_asli,
-                    'jenis_label' => $this->archiveTypes()[$item->jenis_asli] ?? $item->jenis_asli,
-                    'file_url' => $item->file_url,
-                    'edit_url' => route('arsip-statis.edit', $item),
-                    'delete_url' => route('arsip-statis.destroy', $item),
-                    'sort_date' => $item->created_at?->toDateString(),
-                ];
+                $rows = array_map(function ($a) use ($item, $detail, $kolektif) {
+                    return [
+                        'key' => 'arsip-kepegawaian-'.$item->id.'-'.$a['nip'],
+                        'id' => $item->id,
+                        'tanggal_masuk' => $item->created_at?->toDateString(),
+                        'tanggal_asli' => $item->tanggal_asli,
+                        'nama' => $a['nama'],
+                        'nip' => $a['nip'] ?? '-',
+                        'kolektif' => $kolektif,
+                        'perihal' => $detail['perihal'] ?? null,
+                        'jenis_asli' => $item->jenis_asli,
+                        'jenis_label' => $this->archiveTypes()[$item->jenis_asli] ?? $item->jenis_asli,
+                        'file_url' => $item->file_url,
+                        'edit_url' => route('arsip-statis.edit', $item),
+                        'delete_url' => route('arsip-statis.destroy', $item),
+                        'sort_date' => $item->created_at?->toDateString(),
+                    ];
+                }, $anggota);
+
+                if ($search) {
+                    $rows = array_values(array_filter($rows, function ($row) use ($search) {
+                        $s = strtolower($search);
+                        return str_contains(strtolower($row['nama']), $s)
+                            || str_contains(strtolower($row['nip']), $s)
+                            || str_contains(strtolower($row['perihal'] ?? ''), $s);
+                    }));
+                }
+
+                return $rows;
             })
             ->sortByDesc('sort_date')
             ->values()
             ->map(function (array $item) {
-            unset($item['sort_date']);
-            return $item;
-        });
+                unset($item['sort_date']);
+                return $item;
+            });
 
         return Inertia::render('ArsipStatis/Index', [
             'arsip' => $arsip,
